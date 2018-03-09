@@ -71,7 +71,7 @@ get<APIRootObject>("https://www.thebluealliance.com/swagger/api_v3.json")
       paths: getEndpoints(),
       types: buildTypes(data.types)
     });
-    fs.writeFile('genAPI.ts',file,'utf8',err=>{if(err)throw err;console.log('DONE')})
+    fs.writeFile('client/genAPI.ts',file,'utf8',err=>{if(err)throw err;console.log('DONE')})
   }).catch(err=>{
     console.error(err)
   })
