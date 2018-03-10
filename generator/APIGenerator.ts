@@ -2,6 +2,8 @@ import * as https from "https";
 import * as url from "url";
 import * as fs from "fs";
 
+type KeyVal<T> = {[name:string]:T}
+
 function get<T>(urlS: string) {
   return new Promise<T>((res, rej) => {
     https.get(
@@ -13,7 +15,7 @@ function get<T>(urlS: string) {
           obj += data;
         });
         req.on("end", () => {
-          let data = JSON.parse(obj);
+        let data = JSON.parse(obj.replace(/,([\s\n]*})/,(_,a1)=>a1));
           if (req.statusCode == 404) {
             rej(data);
           } else res(data);
@@ -26,30 +28,48 @@ function get<T>(urlS: string) {
   });
 }
 
-get<APIRootObject>("https://www.thebluealliance.com/swagger/api_v3.json")
+get<SwaggerRoot>("https://www.thebluealliance.com/swagger/api_v3.json")
   .then(data => {
     console.log(data.info.version)
     let paths: KeyVal<needPath> = {};
-    let pars = data.parameters;
+    let pars = data.parameters||{};
+    let checks:KeyVal<string>={}
+    for (const key in pars) {
+      let c = buildCheck(pars[key])
+      if(c!= null)checks[key]=c
+    }
     for (const key in data.paths) {
       let path = data.paths[key].get;
-      let nKey= key.replace(/{/g,'${')
+      if(path == null)continue
+      let nKey= key.replace(/{(\w+)}/g,(_,a1)=>`\${${(typeof checks[a1]!='undefined')?`check('${a1}',${a1})`:a1}}`)
+      let returnType='void'
+      if(path.responses != null && path.responses['200'] != null){
+        let responseOK = path.responses['200']
+        if('$ref' in responseOK)returnType = buildSchema(responseOK)
+        else returnType = buildSchema(responseOK.schema)
+      }
       paths[nKey] = {
-        par: path.parameters
-          .map(par => {
-            let parRef = par.$ref.split("/");
-            let parKey = parRef[parRef.length - 1];
-            let parData = pars[parKey];
+        par: (path.parameters == null)?[]: path.parameters.map(par => {
+          let parKey:string
+          let parData:Parameter
+          if('$ref' in par){
+            parKey = buildSchema(par)
+            parData = pars[parKey]
+          }else{
+            parKey = par.name
+            parData = par
+          }
+          if(parData.in!='path')return {key:'',type:'',description:'',required:false,hasCheck:false}
             return {
               key: parKey,
-              type: parData.type,
-              description: parData.description,
-              required:parData.required
+              type: (parData.type) || '',
+              description: parData.description || '',
+              required:parData.required || false,
+              hasCheck:typeof checks[parKey] !== 'undefined'
             };
-          })
-          .filter(a => pars[a.key].in == "path"),
-        description: path.description,
-        returnType: buildProperty(path.responses["200"].schema),
+          }).filter(a=>a.key.length>0),
+        description: path.description || '',
+        returnType,
         name: getEndpointName(key)
       };
       addEndpoint(nKey, paths[nKey]);
@@ -59,7 +79,8 @@ get<APIRootObject>("https://www.thebluealliance.com/swagger/api_v3.json")
       basePath: data.basePath,
       security: data.securityDefinitions,
       paths,
-      types: data.definitions
+      types: data.definitions,
+      checks
     } as need;
   })
   .then(async data => {
@@ -67,9 +88,10 @@ get<APIRootObject>("https://www.thebluealliance.com/swagger/api_v3.json")
     file = replace(file, {
       host: '"'+data.host+'"',
       basePath: '"'+data.basePath+'"',
-      apiKeyName: '"'+data.security.apiKey.name+'"',
+      apiKeyName: '"'+(data.security.apiKey.type=='apiKey'? data.security.apiKey.name:'')+'"',
       paths: getEndpoints(),
-      types: buildTypes(data.types)
+      types: buildTypes(data.types),
+      checks:Object.keys(data.checks).map(a=>a+': '+data.checks[a]).join(',\n')
     });
     fs.writeFile('client/genAPI.ts',file,'utf8',err=>{if(err)throw err;console.log('DONE')})
   }).catch(err=>{
@@ -78,8 +100,8 @@ get<APIRootObject>("https://www.thebluealliance.com/swagger/api_v3.json")
 
 
 function replace(s: string, rep: KeyVal<string>) {
-  return s.replace(new RegExp(`\\/\\/(.*){{(\\w+)}}`, "g"), (st, a1, a2) => {
-    return a1 + (rep[a2]||'');
+  return s.replace(new RegExp(`\\/\\/(.*){{(\\w+)}}|\\/\\*([^{\\n}]*){{(\\w+)\\*\\/[^{\\n}]*}}([^{\\n}]*)\\*\\/`, "g"), (_, a1, a2,a3,a4,a5) => {
+    return a3==null?a1 + (rep[a2]||''):a3+(rep[a4]||'')+a5;
   });
 }
 let KeyValTest = /key-val[\w\s`]+ the ([\w\s]+) as/;
@@ -94,13 +116,46 @@ function fsRead(path: string) {
   });
 }
 
+function buildCheck(par:Parameter){
+  if(par.in!='body'){
+    let s=''
+    switch(par.type){
+      case "integer":
+      s = 'val = Math.floor(val)'
+      case "number":
+      if(par.maximum!=null){
+        s+=`\nif(val >${par.exclusiveMaximum?'=':''} ${par.maximum}) throw new Error('${par.name} needs to be <${par.exclusiveMaximum?'':'='} ${par.maximum}')`
+      }
+      if(par.minimum != null){
+        s+=`\nif(val <${par.exclusiveMinimum?'=':''} ${par.minimum}) throw new Error('${par.name} needs to be >${par.exclusiveMinimum?'':'='} ${par.minimum}')`
+      }
+      if(par.multipleOf != null){
+        s+=`\nif(val % ${par.multipleOf} != 0) throw new Error('${par.name} needs to be a multiple of ${par.multipleOf}')`
+      }
+      break
+      case "string":
+      if(par.pattern != null){
+        s+=`\nif(!/${par.pattern.replace(/\\\\/g,'\\')}/.test(val)) throw new Error('${par.name} needs to satisfy the pattern ${par.pattern}')`
+      }
+      if(par.maxLength != null){
+        s+=`\nif(val.length > ${par.maxLength}) throw new Error('The length of ${par.name} needs to be <= ${par.maxLength}')`
+      }
+      if(par.minLength != null){
+        s+=`\nif(val.length < ${par.minLength}) throw new Error('The length of ${par.name} needs to be >= ${par.minLength}')`
+      }
+      break
+    }
+    if(s.length>0)return `(val:${par.type})=>{${s}\nreturn val\n}`
+  }
+}
+
 interface need {
   host: string;
   basePath: string;
-  security: SecurityDefinitions;
+  security: SecurityDefs;
   paths: KeyVal<needPath>;
-
-  types: KeyVal<IDefinition>;
+  checks:KeyVal<string>
+  types: KeyVal<Schema>;
 }
 interface needPath {
   description: string;
@@ -110,6 +165,7 @@ interface needPath {
     type: string;
     description: string;
     required:boolean
+    hasCheck:boolean
   }[];
   returnType: string;
 }
@@ -133,7 +189,7 @@ function addEndpoint(key: string, data: needPath) {
       }
     }
   }
-  data.par.push({key:'onCashExpire',type:`getPromise<${data.returnType}>`,description:'Get new promise once the cash expires',required:false})
+  data.par.push({key:'onCashExpire',type:`getPromise<${data.returnType}>`,description:'Get new promise once the cash expires',required:false,hasCheck:false})
   if (typeof t[name] != "undefined") {
     t[name].linked.push({ key, data });
     addParToTree(t[name].parTree, data.par.map(a => {return {type:a.type,req:a.required}}), key);
@@ -171,7 +227,7 @@ function getEndpoints() {
   return s;
 }
 
-function addParToTree(node: KeyVal<ParNode>, type: {type:string,req:boolean}[], dest: string, index = 0,top?:number) {
+function addParToTree(node: KeyVal<ParNode>, type: {type:string,req:boolean}[], dest: string, index = 0) {
   if (type.length > index) {
     const curType = (type[index].req?'':'?')+type[index].type
     if (typeof node[curType] == "undefined") node[curType] = { next: addParToTree({}, type, dest, index + 1),key:type[index].type };
@@ -201,7 +257,7 @@ function buildMultiCaller(pars: ParNode, index = 1) {
   }
   if (pars.data != null && pars.data.length>0) {
     let count = 0;
-    s+= `return this.TBAGet(\`${pars.data.replace(/{\w+}/g, () => "{par" + ++count +'}')}\`, par${++count})`;
+    s+= `return this.TBAGet(\`${pars.data.replace(/{\w+}|{count\('(\w+)',\w+\)}/g, (_,a1) => `{${a1?`count('${a1}'`:''}"par"${++count}${a1?')':''}}`)}\`, par${++count})`;
   }else if(nextKeys.length==0){
     s+= `throw new Error('Parameter ${index-1} is of a wrong type')`
   }
@@ -240,10 +296,10 @@ function buildFunctionCaller(data: needPath) {
     `):Promise<${data.returnType}>`
   );
 }
-function buildTypes(defs:KeyVal<IDefinition>){
+function buildTypes(defs:KeyVal<Schema>){
   let s=''
   for(const key in defs){
-    let type = buildType(defs[key],true)
+    let type = buildSchema(defs[key],true)
     if(typeof type != 'string'){
       s+=`/** ${type.desc} */\n`
       type = type.val
@@ -253,15 +309,16 @@ function buildTypes(defs:KeyVal<IDefinition>){
   return s
 }
 
-function buildType(def:IDefinition):string
-function buildType(def:IDefinition,allowDesc:false):string
-function buildType(def:IDefinition,allowDesc:boolean):string|{val:string,desc:string}
-  function buildType(def:IDefinition,allowDesc=false):string|{val:string,desc:string}{
+function buildObject(def:SchemaObject):string
+function buildObject(def:SchemaObject,allowDesc:false):string
+function buildObject(def:SchemaObject,allowDesc:boolean):string|{val:string,desc:string}
+  function buildObject(def:SchemaObject,allowDesc=false):string|{val:string,desc:string}{
   let {required,properties} = def
+  if(properties == null)return '{}'
   let s='{\n'
   if(required == null)required=[]
   for(const key in properties){
-    let prop = buildProperty(properties[key],allowDesc)
+    let prop = buildSchema(properties[key],allowDesc)
     if(typeof prop != 'string'){
       s+= `/** ${prop.desc} */\n`
       prop = prop.val
@@ -272,15 +329,16 @@ function buildType(def:IDefinition,allowDesc:boolean):string|{val:string,desc:st
   return (allowDesc && def.description != null)?{val:s,desc:def.description}:s
 }
 
-function buildProperty(prop:IDefinition | ISchema | Items | IEnum):string
-function buildProperty(prop:IDefinition | ISchema | Items | IEnum,allowDesc:false):string
-function buildProperty(prop:IDefinition | ISchema | Items | IEnum,allowDesc:boolean):string|{val:string,desc:string}
-function buildProperty(prop:IDefinition | ISchema | Items | IEnum,allowDesc=false):string|{val:string,desc:string}{
+function buildSchema(prop:Schema| undefined):string
+function buildSchema(prop:Schema| undefined,allowDesc:false):string
+function buildSchema(prop:Schema| undefined,allowDesc:boolean):string|{val:string,desc:string}
+function buildSchema(prop:Schema| undefined,allowDesc=false):string|{val:string,desc:string}{
+  if(prop == null) return 'void'
   if('properties' in prop){
-    return buildType(prop,allowDesc)
+    return buildObject(prop,allowDesc)
   }else if('type' in prop){
     if('items' in prop){
-      let s = buildProperty(prop.items,allowDesc)
+      let s = buildSchema(prop.items,allowDesc)
       if(typeof s != 'string'){
         s=s.val
       }
@@ -291,28 +349,29 @@ function buildProperty(prop:IDefinition | ISchema | Items | IEnum,allowDesc=fals
       if(prop.description != null && (testKeyVal = KeyValTest.exec(prop.description))!=null){
         key=testKeyVal[1]
       }
-        let addProp=buildProperty(prop.additionalProperties,allowDesc),s=''
+        let addProp=buildSchema(prop.additionalProperties,allowDesc),s=''
         if(typeof addProp != 'string'){
           addProp = addProp.val
         }
         s=`{[${key.replace(' ','_')}:string]:${addProp}}`
         return (allowDesc && prop.description != null) ? {val:s,desc:prop.description}:s
-    }else if('enum' in prop){
+    }else if('enum' in prop && prop.enum != null){
       let s=prop.enum.map(a=>'"'+a+'"').join('|')
       return (allowDesc && prop.description != null)?{val:s,desc:prop.description}:s
     }else{
-      let type = fixProp(prop.type)
+      let type = fixProp(prop.type) as string
       if(type == 'array')type='any[]'
       else if(type == 'object')type='{[key:string]:any}'
-      return (allowDesc && prop.description != null)? {val:type,desc:prop.description}:type
+      return (allowDesc && prop.description != null)? {val:type || '',desc:prop.description}:type||''
     }
-  }else{
-    return fixProp(prop.$ref.split('/').pop())
+  }else if('$ref' in prop){
+    return fixProp(prop.$ref.split('/').pop()) || 'void'
   }
+  return 'void'
 }
 
-function fixProp(prop:string|undefined){
-  if(typeof prop == 'undefined')return ''
-  if(prop=='integer')return 'number'
+function fixProp<T>(prop:T):T{
+  if(typeof prop == 'undefined')return <any>''
+  if(typeof prop == 'string' && prop=='integer')return <any>'number'
   return prop
 }

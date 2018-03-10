@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc && node generator/APIGenerator.js && tsc client/genAPI.ts types/* --target es2017 --declaration --declarationDir types"
   },
   "keywords": [],
   "author": "",

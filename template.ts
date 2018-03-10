@@ -2,9 +2,9 @@ import * as https from 'https'
 export type KeyVal<T> = { [key: string]: T };
 export type getPromise<T> = (callback: () => Promise<T>) => any;
 
-const host= "www.thebluealliance.com" //&& {{host}}
-const basePath = "/api/v3" //&& {{basePath}}
-const apiKeyName = "X-TBA-Auth-Key" //&& {{apiKeyName}}
+const host= /*{{host*/"www.thebluealliance.com"/*}}*/
+const basePath = /*{{basePath*/"/api/v3" /*}}*/
+const apiKeyName = /*{{apiKeyName*/"X-TBA-Auth-Key" /*}}*/
 
 
 export class TBA{
@@ -23,7 +23,7 @@ export class TBA{
         return new Promise<T>((resolve, reject) => {
           if (maxAge != null && maxAge > +new Date()) {
             resolve(tempCache);
-            if (onOutdated) setTimeout(onOutdated, maxAge - +new Date(), () => this.TBAGet(path, onOutdated)).unref();
+            if (onOutdated) global.setTimeout(onOutdated, maxAge - +new Date(), () => this.TBAGet(path, onOutdated)).unref();
             console.log(path + " from cache due to age");
             return;
           }
@@ -47,7 +47,7 @@ export class TBA{
               modified = res.headers["last-modified"] || res.headers["Last-Modified"];
               let cacheControl = /max-age=(\d+)/.exec(res.headers["cache-control"]||'');
               if (cacheControl !== null && cacheControl[1]) maxAge = 1000 * parseInt(cacheControl[1], 10) + +new Date();
-              if (onOutdated) setTimeout(onOutdated, maxAge - +new Date(), () => this.TBAGet(path, onOutdated)).unref();
+              if (onOutdated) global.setTimeout(onOutdated, maxAge - +new Date(), () => this.TBAGet(path, onOutdated)).unref();
               if (res.statusCode === 304) {
                 resolve(tempCache);
                 console.log(path + " from cache due to 304");
@@ -69,6 +69,12 @@ export class TBA{
         });
       }
       //{{paths}}
+}
+
+let checks:KeyVal<(<T>(val:T)=>T)> = {/*{{checks*//*}}*/}
+
+function check<T>(key:string,val:T):T{
+  return checks[key](val)
 }
 
 // {{types}}
