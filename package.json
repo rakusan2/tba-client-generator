@@ -1,17 +1,20 @@
 {
-  "name": "tba-client",
+  "name": "tba-api-client",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Promise Based TBA V3 API Client with Types",
+  "main": "client/genAPI.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && node generator/APIGenerator.js && tsc client/genAPI.ts types/* --target es2017 --declaration --declarationDir types"
+    "test": "node test/test.js",
+    "build":
+      "tsc && node generator/APIGenerator.js && tsc client/genAPI.ts --target es2017 --declaration --declarationDir types"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["tba", "API", "tba-api"],
+  "author": "Tomas Rakusan",
+  "license": "MIT",
+  "types": "types/genAPI.d.ts",
   "devDependencies": {
-    "@types/node": "^9.4.6"
+    "@types/node": "^9.4.6",
+    "typescript": "^2.7.2"
   },
   "dependencies": {}
 }

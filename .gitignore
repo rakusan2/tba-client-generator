@@ -4,3 +4,4 @@ node_modules/
 t/
 *.d.ts
 !typings/*.d.ts
+test/key.txt

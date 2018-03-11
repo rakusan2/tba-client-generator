@@ -7,7 +7,7 @@ const basePath = /*{{basePath*/"/api/v3" /*}}*/
 const apiKeyName = /*{{apiKeyName*/"X-TBA-Auth-Key" /*}}*/
 
 
-export class TBA{
+export class API{
     private __key:string
     private cache:KeyVal<any>={}
     constructor(key:string){
@@ -55,6 +55,7 @@ export class TBA{
               else {
                 try {
                   tempCache = JSON.parse(raw);
+                  if(res.statusCode >= 400) return reject(tempCache)
                   this.cache[path] = { modified, val: tempCache, max_age: maxAge };
                   resolve(tempCache);
                 } catch (e) {

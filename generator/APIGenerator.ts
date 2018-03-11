@@ -257,7 +257,7 @@ function buildMultiCaller(pars: ParNode, index = 1) {
   }
   if (pars.data != null && pars.data.length>0) {
     let count = 0;
-    s+= `return this.TBAGet(\`${pars.data.replace(/{\w+}|{count\('(\w+)',\w+\)}/g, (_,a1) => `{${a1?`count('${a1}'`:''}"par"${++count}${a1?')':''}}`)}\`, par${++count})`;
+    s+= `return this.TBAGet(\`${pars.data.replace(/{\w+}|{count\('(\w+)',\w+\)}/g, (_,a1) => `{${a1?`count('${a1}'`:''}par${++count}${a1?')':''}}`)}\`, par${++count})`;
   }else if(nextKeys.length==0){
     s+= `throw new Error('Parameter ${index-1} is of a wrong type')`
   }
