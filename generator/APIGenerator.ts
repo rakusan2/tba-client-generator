@@ -2,7 +2,7 @@ import * as https from "https";
 import * as url from "url";
 import * as fs from "fs";
 
-type KeyVal<T> = {[name:string]:T}
+type KeyVal<T> = { [name: string]: T };
 
 function get<T>(urlS: string) {
   return new Promise<T>((res, rej) => {
@@ -15,7 +15,7 @@ function get<T>(urlS: string) {
           obj += data;
         });
         req.on("end", () => {
-        let data = JSON.parse(obj.replace(/,([\s\n]*})/,(_,a1)=>a1));
+          let data = JSON.parse(obj.replace(/,([\s\n]*})/, (_, a1) => a1));
           if (req.statusCode == 404) {
             rej(data);
           } else res(data);
@@ -30,45 +30,54 @@ function get<T>(urlS: string) {
 
 get<SwaggerRoot>("https://www.thebluealliance.com/swagger/api_v3.json")
   .then(data => {
-    console.log(data.info.version)
+    console.log(data.info.version);
     let paths: KeyVal<needPath> = {};
-    let pars = data.parameters||{};
-    let checks:KeyVal<string>={}
+    let pars = data.parameters || {};
+    let checks: KeyVal<string> = {};
     for (const key in pars) {
-      let c = buildCheck(pars[key])
-      if(c!= null)checks[key]=c
+      let c = buildCheck(pars[key], 1);
+      if (c != null) checks[key] = c;
     }
     for (const key in data.paths) {
       let path = data.paths[key].get;
-      if(path == null)continue
-      let nKey= key.replace(/{(\w+)}/g,(_,a1)=>`\${${(typeof checks[a1]!='undefined')?`check('${a1}',${a1})`:a1}}`)
-      let returnType='void'
-      if(path.responses != null && path.responses['200'] != null){
-        let responseOK = path.responses['200']
-        if('$ref' in responseOK)returnType = buildSchema(responseOK)
-        else returnType = buildSchema(responseOK.schema)
+      if (path == null) continue;
+      let nKey = key.replace(
+        /{(\w+)}/g,
+        (_, a1) => `\${${typeof checks[a1] != "undefined" ? `check('${a1}',${a1})` : a1}}`
+      );
+      let returnType = "void";
+      if (path.responses != null && path.responses["200"] != null) {
+        let responseOK = path.responses["200"];
+        if ("$ref" in responseOK) returnType = buildSchemaStr(responseOK);
+        else returnType = buildSchemaStr(responseOK.schema);
       }
       paths[nKey] = {
-        par: (path.parameters == null)?[]: path.parameters.map(par => {
-          let parKey:string
-          let parData:Parameter
-          if('$ref' in par){
-            parKey = buildSchema(par)
-            parData = pars[parKey]
-          }else{
-            parKey = par.name
-            parData = par
-          }
-          if(parData.in!='path')return {key:'',type:'',description:'',required:false,hasCheck:false}
-            return {
-              key: parKey,
-              type: (parData.type) || '',
-              description: parData.description || '',
-              required:parData.required || false,
-              hasCheck:typeof checks[parKey] !== 'undefined'
-            };
-          }).filter(a=>a.key.length>0),
-        description: path.description || '',
+        par:
+          path.parameters == null
+            ? []
+            : path.parameters
+                .map(par => {
+                  let parKey: string;
+                  let parData: Parameter;
+                  if ("$ref" in par) {
+                    parKey = buildSchemaStr(par);
+                    parData = pars[parKey];
+                  } else {
+                    parKey = par.name;
+                    parData = par;
+                  }
+                  if (parData.in != "path")
+                    return { key: "", type: "", description: "", required: false, hasCheck: false };
+                  return {
+                    key: parKey,
+                    type: parData.type || "",
+                    description: parData.description || "",
+                    required: parData.required || false,
+                    hasCheck: typeof checks[parKey] !== "undefined"
+                  };
+                })
+                .filter(a => a.key.length > 0),
+        description: path.description || "",
         returnType,
         name: getEndpointName(key)
       };
@@ -86,26 +95,33 @@ get<SwaggerRoot>("https://www.thebluealliance.com/swagger/api_v3.json")
   .then(async data => {
     let file = await fsRead("template.ts");
     file = replace(file, {
-      host: '"'+data.host+'"',
-      basePath: '"'+data.basePath+'"',
-      apiKeyName: '"'+(data.security.apiKey.type=='apiKey'? data.security.apiKey.name:'')+'"',
-      paths: getEndpoints(),
-      types: buildTypes(data.types),
-      checks:Object.keys(data.checks).map(a=>a+': '+data.checks[a]).join(',\n')
+      host: '"' + data.host + '"',
+      basePath: '"' + data.basePath + '"',
+      apiKeyName: '"' + (data.security.apiKey.type == "apiKey" ? data.security.apiKey.name : "") + '"',
+      paths: getEndpoints(1),
+      types: buildTypeInterfaces(0, data.types),
+      checks: Object.keys(data.checks)
+        .map(a => a + ": " + data.checks[a])
+        .join(",\n")
     });
-    fs.writeFile('client/genAPI.ts',file,'utf8',err=>{if(err)throw err;console.log('DONE')})
-  }).catch(err=>{
-    console.error(err)
+    fs.writeFile("client/genAPI.ts", file, "utf8", err => {
+      if (err) throw err;
+      console.log("DONE");
+    });
   })
-
+  .catch(err => {
+    console.error(err);
+  });
 
 function replace(s: string, rep: KeyVal<string>) {
-  return s.replace(new RegExp(`\\/\\/(.*){{(\\w+)}}|\\/\\*([^{\\n}]*){{(\\w+)\\*\\/[^{\\n}]*}}([^{\\n}]*)\\*\\/`, "g"), (_, a1, a2,a3,a4,a5) => {
-    return a3==null?a1 + (rep[a2]||''):a3+(rep[a4]||'')+a5;
-  });
+  return s.replace(
+    new RegExp(`\\/\\/(.*){{(\\w+)}}|\\/\\*([^{\\n}]*){{(\\w+)\\*\\/[^{\\n}]*}}([^{\\n}]*)\\*\\/`, "g"),
+    (_, a1, a2, a3, a4, a5) => {
+      return a3 == null ? a1 + (rep[a2] || "") : a3 + (rep[a4] || "") + a5;
+    }
+  );
 }
 let KeyValTest = /key-val[\w\s`]+ the ([\w\s]+) as/;
-
 
 function fsRead(path: string) {
   return new Promise<string>((res, rej) => {
@@ -116,36 +132,67 @@ function fsRead(path: string) {
   });
 }
 
-function buildCheck(par:Parameter){
-  if(par.in!='body'){
-    let s=''
-    switch(par.type){
+function buildCheck(par: Parameter, tabs: number) {
+  if (par.in != "body") {
+    let s = new StringBuilder(tabs + 1).addLine();
+    switch (par.type) {
       case "integer":
-      s = 'val = Math.floor(val)'
+        s.addLine("val = Math.floor(val)");
       case "number":
-      if(par.maximum!=null){
-        s+=`\nif(val >${par.exclusiveMaximum?'=':''} ${par.maximum}) throw new Error('${par.name} needs to be <${par.exclusiveMaximum?'':'='} ${par.maximum}')`
-      }
-      if(par.minimum != null){
-        s+=`\nif(val <${par.exclusiveMinimum?'=':''} ${par.minimum}) throw new Error('${par.name} needs to be >${par.exclusiveMinimum?'':'='} ${par.minimum}')`
-      }
-      if(par.multipleOf != null){
-        s+=`\nif(val % ${par.multipleOf} != 0) throw new Error('${par.name} needs to be a multiple of ${par.multipleOf}')`
-      }
-      break
+        if (par.maximum != null) {
+          s.addLine(
+            `if(val >${par.exclusiveMaximum ? "=" : ""} ${par.maximum}) throw new Error('${par.name} needs to be <${
+              par.exclusiveMaximum ? "" : "="
+            } ${par.maximum}')`
+          );
+        }
+        if (par.minimum != null) {
+          s.addLine(
+            `if(val <${par.exclusiveMinimum ? "=" : ""} ${par.minimum}) throw new Error('${par.name} needs to be >${
+              par.exclusiveMinimum ? "" : "="
+            } ${par.minimum}')`
+          );
+        }
+        if (par.multipleOf != null) {
+          s.addLine(
+            `if(val % ${par.multipleOf} != 0) throw new Error('${par.name} needs to be a multiple of ${
+              par.multipleOf
+            }')`
+          );
+        }
+        break;
       case "string":
-      if(par.pattern != null){
-        s+=`\nif(!/${par.pattern.replace(/\\\\/g,'\\')}/.test(val)) throw new Error('${par.name} needs to satisfy the pattern ${par.pattern}')`
-      }
-      if(par.maxLength != null){
-        s+=`\nif(val.length > ${par.maxLength}) throw new Error('The length of ${par.name} needs to be <= ${par.maxLength}')`
-      }
-      if(par.minLength != null){
-        s+=`\nif(val.length < ${par.minLength}) throw new Error('The length of ${par.name} needs to be >= ${par.minLength}')`
-      }
-      break
+        if (par.pattern != null) {
+          s.addLine(
+            `if(!/${par.pattern.replace(/\\\\/g, "\\")}/.test(val)) throw new Error('${
+              par.name
+            } needs to satisfy the pattern ${par.pattern}')`
+          );
+        }
+        if (par.maxLength != null) {
+          s.addLine(
+            `if(val.length > ${par.maxLength}) throw new Error('The length of ${par.name} needs to be <= ${
+              par.maxLength
+            }')`
+          );
+        }
+        if (par.minLength != null) {
+          s.addLine(
+            `if(val.length < ${par.minLength}) throw new Error('The length of ${par.name} needs to be >= ${
+              par.minLength
+            }')`
+          );
+        }
+        break;
     }
-    if(s.length>0)return `(val:${par.type})=>{${s}\nreturn val\n}`
+    if (s.strings.length > 1) {
+      return new StringBuilder(tabs)
+        .addLine(`(val:${par.type})=>{`)
+        .add(s)
+        .addLine("return val")
+        .addLine("}")
+        .build();
+    }
   }
 }
 
@@ -154,7 +201,7 @@ interface need {
   basePath: string;
   security: SecurityDefs;
   paths: KeyVal<needPath>;
-  checks:KeyVal<string>
+  checks: KeyVal<string>;
   types: KeyVal<Schema>;
 }
 interface needPath {
@@ -164,8 +211,8 @@ interface needPath {
     key: string;
     type: string;
     description: string;
-    required:boolean
-    hasCheck:boolean
+    required: boolean;
+    hasCheck: boolean;
   }[];
   returnType: string;
 }
@@ -189,88 +236,149 @@ function addEndpoint(key: string, data: needPath) {
       }
     }
   }
-  data.par.push({key:'onCashExpire',type:`getPromise<${data.returnType}>`,description:'Get new promise once the cash expires',required:false,hasCheck:false})
+  data.par.push({
+    key: "onCashExpire",
+    type: `getPromise<${data.returnType}>`,
+    description: "Get new promise once the cash expires",
+    required: false,
+    hasCheck: false
+  });
   if (typeof t[name] != "undefined") {
     t[name].linked.push({ key, data });
-    addParToTree(t[name].parTree, data.par.map(a => {return {type:a.type,req:a.required}}), key);
-  } else t[name] = { key, data, linked: [], parTree: addParToTree({}, data.par.map(a => {return {type:a.type,req:a.required}}), key) };
+    addParToTree(
+      t[name].parTree,
+      data.par.map(a => {
+        return { type: a.type, req: a.required };
+      }),
+      key
+    );
+  } else
+    t[name] = {
+      key,
+      data,
+      linked: [],
+      parTree: addParToTree(
+        {},
+        data.par.map(a => {
+          return { type: a.type, req: a.required };
+        }),
+        key
+      )
+    };
 }
-function getEndpoints() {
-  let s = "";
+function getEndpoints(tabs: number) {
+  let s = new StringBuilder(tabs);
   for (const key in t) {
-    let {data:endData,linked,parTree,key:endKey} = t[key];
-    let typeArr = endData.par.map(par =>{ return { types:[par.type],required:par.required}});
-    s += buildFunctionCaller(endData);
+    let { data: endData, linked, parTree, key: endKey } = t[key];
+    let typeArr = endData.par.map(par => {
+      return { types: [par.type], required: par.required };
+    });
+    buildFunctionCaller(s, endData);
     for (let i = 0; i < linked.length; i++) {
-      s += buildFunctionCaller(linked[i].data);
+      s.addLine();
+      buildFunctionCaller(s, linked[i].data);
       linked[i].data.par.map((par, index) => {
-        if (typeof typeArr[index] == "undefined") typeArr[index] = {types:[par.type],required:false};
-        else{
-          if(!typeArr[index].types.includes(par.type))typeArr[index].types.push(par.type);
-          typeArr[index].required = typeArr[index].required && par.required
+        if (typeof typeArr[index] == "undefined") typeArr[index] = { types: [par.type], required: false };
+        else {
+          if (!typeArr[index].types.includes(par.type)) typeArr[index].types.push(par.type);
+          typeArr[index].required = typeArr[index].required && par.required;
         }
       });
-
     }
-    if(linked.length>0){
-      console.log({multi:endData.name})
-      let req=true
-      s+=`\n${endData.name}(${typeArr.map((a,c)=>`par${c+1}${(req=req&&a.required)?'':'?'}: ${[...new Set(a.types)].sort((a,b)=>a.length-b.length).join(' | ')}`).join(',')}){
-        ${buildMultiCaller({next:parTree,key:'root'})}
-      }\n`
-    }else{
-      s+=`{
-        return this.TBAGet(\`${endKey}\`,onCashExpire)
-      }\n`
+    if (linked.length > 0) {
+      console.log({ multi: endData.name });
+      let req = true;
+      s
+        .addLine()
+        .add(endData.name + "(")
+        .add(
+          typeArr
+            .map(
+              (types, i) =>
+                `par${i + 1}${(req = req && types.required) ? "" : "?"}: ${[...new Set(types.types)]
+                  .sort((a, b) => a.length - b.length)
+                  .join(" | ")}`
+            )
+            .join(", ")
+        )
+        .add("){");
+      buildMultiCaller(s, { next: parTree, key: "root" });
+      s.addLine().addLine("}");
+    } else {
+      s
+        .add("{")
+        .getNextTab()
+        .addLine()
+        .add(`return this.TBAGet(\`${endKey}\`,onCashExpire)`);
+      s.addLine().addLine("}");
     }
   }
-  return s;
+  return s.build();
 }
 
-function addParToTree(node: KeyVal<ParNode>, type: {type:string,req:boolean}[], dest: string, index = 0) {
+function addParToTree(node: KeyVal<ParNode>, type: { type: string; req: boolean }[], dest: string, index = 0) {
   if (type.length > index) {
-    const curType = (type[index].req?'':'?')+type[index].type
-    if (typeof node[curType] == "undefined") node[curType] = { next: addParToTree({}, type, dest, index + 1),key:type[index].type };
-    else addParToTree(node[curType].next,type,dest,index+1)
-    if (type.length - 1 == index && node[curType].data==null) node[curType].data = dest;
-    Object.keys(node).filter(a=>a!=curType).map(a=>addParToTree(node[a].next,type,'',index+1))
+    const curType = (type[index].req ? "" : "?") + type[index].type;
+    if (typeof node[curType] == "undefined")
+      node[curType] = { next: addParToTree({}, type, dest, index + 1), key: type[index].type };
+    else addParToTree(node[curType].next, type, dest, index + 1);
+    if (type.length - 1 == index && node[curType].data == null) node[curType].data = dest;
+    Object.keys(node)
+      .filter(a => a != curType)
+      .map(a => addParToTree(node[a].next, type, "", index + 1));
   }
   return node;
 }
 
-function buildMultiCaller(pars: ParNode, index = 1) {
-  let allKeys = Object.keys(pars.next).sort((a,b)=>a.length-b.length);
-  let nextKeys = allKeys.filter(a=>pars.next[a].data!='')
-  let hasFalse = allKeys.length!=nextKeys.length
-  let s = "";
+function buildMultiCaller(s: StringBuilder, pars: ParNode, index = 1) {
+  let allKeys = Object.keys(pars.next).sort((a, b) => a.length - b.length);
+  let nextKeys = allKeys.filter(a => pars.next[a].data != "");
+  let hasFalse = allKeys.length != nextKeys.length;
+  let newTab = s.getNextTab();
   if (nextKeys.length > 0) {
-    if (nextKeys.length == 1 && pars.data ==null && !hasFalse) {
-      s += buildMultiCaller(pars.next[nextKeys[0]], index + 1);
-    } else
+    if (nextKeys.length == 1 && pars.data == null && !hasFalse) {
+      buildMultiCaller(s, pars.next[nextKeys[0]], index + 1);
+    } else {
+      newTab.addLine();
       for (let i = 0; i < nextKeys.length; i++) {
-        if(i>0){
-          s+='else '
+        if (i > 0) {
+          newTab.add("else ");
         }
-        if(nextKeys.length-1 != i || nextKeys.length==1) s += `if(${nextKeys[i][0] == '?'?`typeof par${index} == 'undefined' || `:''}typeof par${index} == '${testFunc(pars.next[nextKeys[i]].key)}')`
-        s+='{\n\t'+buildMultiCaller(pars.next[nextKeys[i]], index + 1)+'\n}\n'
+        if (nextKeys.length - 1 != i || nextKeys.length == 1)
+          newTab.add(
+            `if(${
+              nextKeys[i][0] == "?" ? `typeof par${index} == 'undefined' || ` : ""
+            }typeof par${index} == '${testFunc(pars.next[nextKeys[i]].key)}')`
+          );
+        newTab.add("{");
+        buildMultiCaller(newTab, pars.next[nextKeys[i]], index + 1);
+        newTab.addLine().add("}");
       }
+    }
   }
-  if (pars.data != null && pars.data.length>0) {
+  if (pars.data != null && pars.data.length > 0) {
     let count = 0;
-    s+= `return this.TBAGet(\`${pars.data.replace(/{\w+}|{count\('(\w+)',\w+\)}/g, (_,a1) => `{${a1?`count('${a1}'`:''}par${++count}${a1?')':''}}`)}\`, par${++count})`;
-  }else if(nextKeys.length==0){
-    s+= `throw new Error('Parameter ${index-1} is of a wrong type')`
+    newTab
+      .addLine()
+      .add(
+        `return this.TBAGet(\`${pars.data.replace(
+          /{\w+}|{check\('(\w+)',\w+\)}/g,
+          (_, a1) => `{${a1 ? `check('${a1}'` : ""}par${++count}${a1 ? ")" : ""}}`
+        )}\`, par${++count})`
+      );
+  } else if (nextKeys.length == 0) {
+    newTab.addLine().add(`throw new Error('Parameter ${index - 1} is of a wrong type')`);
   }
-  return s;
+  return;
 }
-function testFunc(val:string){
-  if(/getPromise/.test(val))return 'function'
-  return val
+function testFunc(val: string) {
+  if (/getPromise/.test(val)) return "function";
+  return val;
 }
 interface ParNode {
   next: KeyVal<ParNode>;
   data?: string;
-  key:string
+  key: string;
 }
 
 function getEndpointName(key: string) {
@@ -285,93 +393,149 @@ function getEndpointName(key: string) {
   return s;
 }
 
-function buildFunctionCaller(data: needPath) {
-  return (
-    `\n/**
-    * ${data.description}\n` +
-    data.par.map(par => `* @param ${par.key} ${par.description}\n`).join('') +
-    `*/
-    ${data.name}(` +
-    data.par.map(par => `${par.key}${par.required?'':'?'}: ${par.type}`).join(", ") +
-    `):Promise<${data.returnType}>`
-  );
+function buildFunctionCaller(s: StringBuilder, data: needPath) {
+  s.addJSDocLines(data.description, data.par.map(par => par.key + " " + par.description));
+  s
+    .add(data.name)
+    .add("(")
+    .add(data.par.map(par => `${par.key}${par.required ? "" : "?"}: ${par.type}`).join(", "))
+    .add(`):Promise<${data.returnType}>`);
+  return;
 }
-function buildTypes(defs:KeyVal<Schema>){
-  let s=''
-  for(const key in defs){
-    let type = buildSchema(defs[key],true)
-    if(typeof type != 'string'){
-      s+=`/** ${type.desc} */\n`
-      type = type.val
+function buildTypeInterfaces(tabs: number, defs: KeyVal<Schema>) {
+  let s = new StringBuilder(tabs);
+  for (const key in defs) {
+    let type = new StringBuilder(s.tabs + 1);
+    let desc = buildSchema(type, defs[key]);
+    if (desc != undefined && desc.length > 0) {
+      s.addJSDocLines(desc);
     }
-    s+=`export interface ${key}`+ type+'\n'
+    s
+      .add(`export interface ${key}`)
+      .add(type)
+      .addLine();
   }
-  return s
+  return s.build();
 }
 
-function buildObject(def:SchemaObject):string
-function buildObject(def:SchemaObject,allowDesc:false):string
-function buildObject(def:SchemaObject,allowDesc:boolean):string|{val:string,desc:string}
-  function buildObject(def:SchemaObject,allowDesc=false):string|{val:string,desc:string}{
-  let {required,properties} = def
-  if(properties == null)return '{}'
-  let s='{\n'
-  if(required == null)required=[]
-  for(const key in properties){
-    let prop = buildSchema(properties[key],allowDesc)
-    if(typeof prop != 'string'){
-      s+= `/** ${prop.desc} */\n`
-      prop = prop.val
-    }
-    s+=`${key}${required.includes(key)?'':'?'}:${prop}\n`
+function buildObject(s: StringBuilder, def: SchemaObject): string | undefined {
+  let { required, properties } = def;
+  if (properties == null) {
+    s.add("{}");
+    return;
   }
-  s+='}'
-  return (allowDesc && def.description != null)?{val:s,desc:def.description}:s
+  let nextTab = s.add("{").getNextTab();
+  if (required == null) required = [];
+  for (const key in properties) {
+    nextTab.addLine();
+    let prop = new StringBuilder(nextTab.tabs + 1);
+    let desc = buildSchema(prop, properties[key]);
+    if (desc != undefined && desc.length > 0) {
+      nextTab.addJSDocLines(desc);
+    }
+    nextTab.add(`${key}${required.includes(key) ? "" : "?"}:`).add(prop);
+  }
+  s.addLine().add("}");
+  return def.description;
 }
 
-function buildSchema(prop:Schema| undefined):string
-function buildSchema(prop:Schema| undefined,allowDesc:false):string
-function buildSchema(prop:Schema| undefined,allowDesc:boolean):string|{val:string,desc:string}
-function buildSchema(prop:Schema| undefined,allowDesc=false):string|{val:string,desc:string}{
-  if(prop == null) return 'void'
-  if('properties' in prop){
-    return buildObject(prop,allowDesc)
-  }else if('type' in prop){
-    if('items' in prop){
-      let s = buildSchema(prop.items,allowDesc)
-      if(typeof s != 'string'){
-        s=s.val
+function buildSchemaStr(prop: Schema | undefined) {
+  let s = new StringBuilder();
+  buildSchema(s, prop);
+  return s.build();
+}
+
+function buildSchema(s: StringBuilder, prop: Schema | undefined): string | undefined {
+  if (prop == null) {
+    s.add("void");
+    return;
+  }
+  if ("properties" in prop) {
+    return buildObject(s, prop);
+  } else if ("type" in prop) {
+    if ("items" in prop) {
+      buildSchema(s, prop.items);
+      s.add("[]");
+      return prop.description;
+    } else if ("additionalProperties" in prop) {
+      let testKeyVal: RegExpExecArray | null,
+        key = "key";
+      if (prop.description != null && (testKeyVal = KeyValTest.exec(prop.description)) != null) {
+        key = testKeyVal[1];
       }
-      s+='[]'
-      return (allowDesc && prop.description != null)? {val:s,desc:prop.description}:s
-    }else if('additionalProperties' in prop){
-      let testKeyVal:RegExpExecArray|null,key='key'
-      if(prop.description != null && (testKeyVal = KeyValTest.exec(prop.description))!=null){
-        key=testKeyVal[1]
-      }
-        let addProp=buildSchema(prop.additionalProperties,allowDesc),s=''
-        if(typeof addProp != 'string'){
-          addProp = addProp.val
-        }
-        s=`{[${key.replace(' ','_')}:string]:${addProp}}`
-        return (allowDesc && prop.description != null) ? {val:s,desc:prop.description}:s
-    }else if('enum' in prop && prop.enum != null){
-      let s=prop.enum.map(a=>'"'+a+'"').join('|')
-      return (allowDesc && prop.description != null)?{val:s,desc:prop.description}:s
-    }else{
-      let type = fixProp(prop.type) as string
-      if(type == 'array')type='any[]'
-      else if(type == 'object')type='{[key:string]:any}'
-      return (allowDesc && prop.description != null)? {val:type || '',desc:prop.description}:type||''
+      buildSchema(s, prop.additionalProperties);
+      s.addFirst(`{[${key.replace(" ", "_")}:string]:`).add("}");
+      return prop.description;
+    } else if ("enum" in prop && prop.enum != null) {
+      s.add(prop.enum.map(a => '"' + a + '"').join(" | "));
+      return prop.description;
+    } else {
+      s.add(fixProp(prop.type));
+      return prop.description;
     }
-  }else if('$ref' in prop){
-    return fixProp(prop.$ref.split('/').pop()) || 'void'
+  } else if ("$ref" in prop) {
+    s.add(fixProp(prop.$ref.split("/").pop()));
+    return;
   }
-  return 'void'
+  s.add("void");
 }
 
-function fixProp<T>(prop:T):T{
-  if(typeof prop == 'undefined')return <any>''
-  if(typeof prop == 'string' && prop=='integer')return <any>'number'
-  return prop
+function fixProp(prop: string | undefined) {
+  if (typeof prop == "undefined") return "void";
+  if (typeof prop == "string") {
+    if (prop == "integer") return "number";
+    if (prop == "array") return "any[]";
+    if (prop == "object") return "{[key:string]:any}";
+  }
+  return prop;
+}
+
+class StringBuilder {
+  tabs: number;
+  endStr: string = "\n";
+  strings: (string | StringBuilder)[] = [];
+  constructor(tabs = 0) {
+    this.tabs = tabs;
+    for (let i = 0; i < tabs; i++) {
+      this.endStr += "  ";
+    }
+  }
+  add(s: string | StringBuilder) {
+    this.strings.push(s);
+    return this;
+  }
+  addFirst(s: string) {
+    this.strings = [s, ...this.strings];
+    return this;
+  }
+  addLine(s = "") {
+    this.strings.push(s + this.endStr);
+    return this;
+  }
+  addJSDocLines(s: string, params: string[] = []) {
+    let sl = s.split("\n");
+    if (sl.length == 1 && params.length == 0) {
+      this.addLine(`/** ${s} */`);
+    } else {
+      this.addLine("/**");
+      for (let i = 0; i < sl.length - 1; i++) {
+        this.addLine("* " + sl[i]).addLine("*");
+      }
+      this.addLine("* " + sl[sl.length - 1]);
+      if (params.length > 0) this.addLine("*");
+      for (let i = 0; i < params.length; i++) {
+        this.addLine("* @param " + params[i]);
+      }
+      this.addLine("*/");
+    }
+    return this;
+  }
+  getNextTab(tab = this.tabs + 1) {
+    let sb = new StringBuilder(tab);
+    this.strings.push(sb);
+    return sb;
+  }
+  build(): string {
+    return this.strings.map(a => (typeof a == "string" ? a : a.build())).join("");
+  }
 }
