@@ -6,6 +6,12 @@ const host = "www.thebluealliance.com"
 const basePath = "/api/v3"
 const apiKeyName = "X-TBA-Auth-Key"
 
+/**
+* The Blue Alliance V3 API
+*
+* Version 3.03.0
+*/
+
 export class API {
   private __key: string;
   private cache: KeyVal<any> = {};

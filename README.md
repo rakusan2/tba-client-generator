@@ -51,7 +51,7 @@ function getMatchesInfo(matchPromise){
 
 ```
 ## Definition
-The type definitions are located in [`types/genAPI.d.ts`](blob/master/typings/Swagger.d.ts)
+After being built, the type definitions will be located in `types/genAPI.d.ts`
 
 All function calls are located in in the class API and with names that ware taken from their paths with a minor exception
 

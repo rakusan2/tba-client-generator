@@ -6,6 +6,7 @@ const host = /*{{host*/ "www.thebluealliance.com"; /*}}*/
 const basePath = /*{{basePath*/ "/api/v3"; /*}}*/
 const apiKeyName = /*{{apiKeyName*/ "X-TBA-Auth-Key"; /*}}*/
 
+//{{note}}
 export class API {
   private __key: string;
   private cache: KeyVal<any> = {};

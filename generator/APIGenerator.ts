@@ -83,13 +83,15 @@ get<SwaggerRoot>("https://www.thebluealliance.com/swagger/api_v3.json")
       };
       addEndpoint(nKey, paths[nKey]);
     }
+    let versionStr = new StringBuilder(0).addJSDocLines(`The Blue Alliance V3 API\nVersion ${data.info.version}`).build()
     return {
       host: data.host,
       basePath: data.basePath,
       security: data.securityDefinitions,
       paths,
       types: data.definitions,
-      checks
+      checks,
+      note:versionStr
     } as need;
   })
   .then(async data => {
@@ -102,7 +104,8 @@ get<SwaggerRoot>("https://www.thebluealliance.com/swagger/api_v3.json")
       types: buildTypeInterfaces(0, data.types),
       checks: Object.keys(data.checks)
         .map(a => a + ": " + data.checks[a])
-        .join(",\n")
+        .join(",\n"),
+      note:data.note
     });
     fs.writeFile("client/genAPI.ts", file, "utf8", err => {
       if (err) throw err;
@@ -203,6 +206,7 @@ interface need {
   paths: KeyVal<needPath>;
   checks: KeyVal<string>;
   types: KeyVal<Schema>;
+  note:string
 }
 interface needPath {
   description: string;
