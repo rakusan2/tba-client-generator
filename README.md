@@ -51,7 +51,7 @@ function getMatchesInfo(matchPromise){
 
 ```
 ## Definition
-After being built, the type definitions will be located in `types/genAPI.d.ts`
+After being built, the type definitions will be located in [`types/genAPI.d.ts`](https://github.com/rakusan2/tba-client-generator/blob/master/types/genPAI.d.ts)
 
 All function calls are located in in the class API and with names that ware taken from their paths with a minor exception
 

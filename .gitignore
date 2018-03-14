@@ -2,6 +2,4 @@ node_modules/
 *.log
 *.js
 t/
-*.d.ts
-!typings/*.d.ts
 test/key.txt
