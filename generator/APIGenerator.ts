@@ -124,7 +124,7 @@ function replace(s: string, rep: KeyVal<string>) {
     }
   );
 }
-let KeyValTest = /key-val[\w\s`]+ the ([\w\s]+) as/;
+let KeyValTest = /key-val[\w\s`]+ with (?:the )?([\w\s]+) (?:\([\w` ]+\) )?as (?:the )?key/;
 
 function fsRead(path: string) {
   return new Promise<string>((res, rej) => {

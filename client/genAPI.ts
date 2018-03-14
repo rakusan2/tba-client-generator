@@ -1135,11 +1135,11 @@ export interface Event_Insights_2017_Detail{
 /** OPR, DPR, and CCWM for teams at the event. */
 export interface Event_OPRs{
     /** A key-value pair with team key (eg `frc254`) as key and OPR as value. */
-    oprs?:{[key:string]:number}
+    oprs?:{[team_key:string]:number}
     /** A key-value pair with team key (eg `frc254`) as key and DPR as value. */
-    dprs?:{[key:string]:number}
+    dprs?:{[team_key:string]:number}
     /** A key-value pair with team key (eg `frc254`) as key and CCWM as value. */
-    ccwms?:{[key:string]:number}
+    ccwms?:{[team_key:string]:number}
   }
 /** JSON Object containing prediction information for the event. Contains year-specific information and is subject to change. */
 export interface Event_Predictions{[key:string]:any}
