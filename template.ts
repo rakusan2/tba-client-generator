@@ -25,7 +25,7 @@ export class API {
         resolve(tempCache);
         if (onOutdated)
           global.setTimeout(onOutdated, maxAge - +new Date(), () => this.TBAGet(path, onOutdated)).unref();
-        console.log(path + " from cache due to age");
+        //console.log(path + " from cache due to age");
         return;
       }
       let opt: https.RequestOptions = {
@@ -52,7 +52,7 @@ export class API {
             global.setTimeout(onOutdated, maxAge - +new Date(), () => this.TBAGet(path, onOutdated)).unref();
           if (res.statusCode === 304) {
             resolve(tempCache);
-            console.log(path + " from cache due to 304");
+            //console.log(path + " from cache due to 304");
           } else if (res.statusCode === 404) reject(JSON.parse(raw));
           else {
             try {
