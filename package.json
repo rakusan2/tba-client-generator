@@ -7,6 +7,10 @@
     "test": "node test/test.js",
     "build": "tsc && node generator/APIGenerator.js && tsc client/genAPI.ts node_modules/@types/node/*.d.ts --target es2017 --module commonjs --moduleResolution node --declaration --declarationDir types"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rakusan2/tba-client-generator.git"
+  },
   "keywords": [
     "tba",
     "API",
@@ -15,6 +19,10 @@
   "author": "Tomas Rakusan",
   "license": "MIT",
   "types": "types/genAPI.d.ts",
+  "bugs": {
+    "url": "https://github.com/rakusan2/tba-client-generator/issues"
+  },
+  "homepage": "https://github.com/rakusan2/tba-client-generator#readme",
   "devDependencies": {
     "@types/node": "^9.4.6",
     "typescript": "^2.7.2"
