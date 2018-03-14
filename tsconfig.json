@@ -55,9 +55,13 @@
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
     //"declarationDir": "types"
   },
+  "include": [
+    "./generator/APIGenerator.ts",
+    "./typings/*"
+  ],
   "exclude": [
-    "types",
-    "client/*",
-    "template.ts"
+    "./types/*",
+    "./client/*",
+    "./template.ts"
   ]
 }
