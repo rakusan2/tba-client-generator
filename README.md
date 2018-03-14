@@ -18,7 +18,7 @@ Using standard Promise then catch
 const TBA = require("tba-api-client")
 const client = TBA.API("{TBA API KEY}")
 
-client.Teams(2017,0).then(teams=>{ // Gets the first page of the teams that were active in 2017
+client.Teams(2017, 0).then( teams =>{ // Gets the first page of the teams that were active in 2017
     console.log(teams)
 }).catch(console.error)
 ```
@@ -29,7 +29,7 @@ const TBA = require("tba-api-client")
 const client = TBA.API("{TBA API KEY}")
 
 async function main(){
-    let teams = await client.Teams(2017,0) // Gets the first page of the teams that were active in 2017
+    let teams = await client.Teams(2017, 0) // Gets the first page of the teams that were active in 2017
 }
 
 main().catch(console.error)
