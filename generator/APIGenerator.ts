@@ -2,36 +2,10 @@ import * as https from "https";
 import * as url from "url";
 import * as fs from "fs";
 
-type KeyVal<T> = { [name: string]: T };
-
-function get<T>(urlS: string) {
-  return new Promise<T>((res, rej) => {
-    https.get(
-      Object.assign({}, url.parse(urlS), { headers: { accept: "application/json" } } as https.RequestOptions),
-      req => {
-        let obj = "";
-        req.setEncoding("utf8");
-        req.on("data", data => {
-          obj += data;
-        });
-        req.on("end", () => {
-          let data = JSON.parse(obj.replace(/,([\s\n]*})/, (_, a1) => a1));
-          if (req.statusCode == 404) {
-            rej(data);
-          } else res(data);
-        });
-        req.on("error", err => {
-          rej(err);
-        });
-      }
-    );
-  });
-}
-
 get<SwaggerRoot>("https://www.thebluealliance.com/swagger/api_v3.json")
   .then(data => {
     console.log(data.info.version);
-    let paths: KeyVal<needPath> = {};
+    let paths: KeyVal<PathInfo> = {};
     let pars = data.parameters || {};
     let checks: KeyVal<string> = {};
     for (const key in pars) {
@@ -116,6 +90,11 @@ get<SwaggerRoot>("https://www.thebluealliance.com/swagger/api_v3.json")
     console.error(err);
   });
 
+/**
+ * Replace Template variables
+ * @param s Input String
+ * @param rep Key-Val Object where key is the variable being replaced and val being the replacement
+ */
 function replace(s: string, rep: KeyVal<string>) {
   return s.replace(
     new RegExp(`\\/\\/(.*){{(\\w+)}}|\\/\\*([^{\\n}]*){{(\\w+)\\*\\/[^{\\n}]*}}([^{\\n}]*)\\*\\/`, "g"),
@@ -124,17 +103,12 @@ function replace(s: string, rep: KeyVal<string>) {
     }
   );
 }
-let KeyValTest = /key-val[\w\s`]+ with (?:the )?([\w\s]+) (?:\([\w` ]+\) )?as (?:the )?key/;
 
-function fsRead(path: string) {
-  return new Promise<string>((res, rej) => {
-    fs.readFile(path, "utf8", (err, data) => {
-      if (err) rej(err);
-      else res(data);
-    });
-  });
-}
-
+/**
+ * Build value checks for parameters
+ * @param par Swagger Get Path Parameter
+ * @param tabs Number of tabs to be shifted by
+ */
 function buildCheck(par: Parameter, tabs: number) {
   if (par.in != "body") {
     let s = new StringBuilder(tabs + 1).addLine();
@@ -199,35 +173,13 @@ function buildCheck(par: Parameter, tabs: number) {
   }
 }
 
-interface need {
-  host: string;
-  basePath: string;
-  security: SecurityDefs;
-  paths: KeyVal<needPath>;
-  checks: KeyVal<string>;
-  types: KeyVal<Schema>;
-  note:string
-}
-interface needPath {
-  description: string;
-  name: string;
-  par: {
-    key: string;
-    type: string;
-    description: string;
-    required: boolean;
-    hasCheck: boolean;
-  }[];
-  returnType: string;
-}
-interface dataGroup {
-  key: string;
-  data: needPath;
-  parTree: KeyVal<ParNode>;
-  linked: { key: string; data: needPath }[];
-}
-let t: KeyVal<dataGroup> = {};
-function addEndpoint(key: string, data: needPath) {
+let endpoints: KeyVal<dataGroup> = {};
+/**
+ * Sort and group Endpoints
+ * @param key Endpoint Path
+ * @param data Path Info
+ */
+function addEndpoint(key: string, data: PathInfo) {
   let name = data.name;
   let tags = data.par.map(a => a.key.replace("_", "/"));
   for (let i = 0; i < tags.length; i++) {
@@ -247,17 +199,17 @@ function addEndpoint(key: string, data: needPath) {
     required: false,
     hasCheck: false
   });
-  if (typeof t[name] != "undefined") {
-    t[name].linked.push({ key, data });
+  if (typeof endpoints[name] != "undefined") {
+    endpoints[name].linked.push({ key, data });
     addParToTree(
-      t[name].parTree,
+      endpoints[name].parTree,
       data.par.map(a => {
         return { type: a.type, req: a.required };
       }),
       key
     );
   } else
-    t[name] = {
+    endpoints[name] = {
       key,
       data,
       linked: [],
@@ -270,10 +222,15 @@ function addEndpoint(key: string, data: needPath) {
       )
     };
 }
+
+/**
+ * Build All Path function
+ * @param tabs Number of Tabs to be shifted by
+ */
 function getEndpoints(tabs: number) {
   let s = new StringBuilder(tabs);
-  for (const key in t) {
-    let { data: endData, linked, parTree, key: endKey } = t[key];
+  for (const key in endpoints) {
+    let { data: endData, linked, parTree, key: endKey } = endpoints[key];
     let typeArr = endData.par.map(par => {
       return { types: [par.type], required: par.required };
     });
@@ -320,6 +277,12 @@ function getEndpoints(tabs: number) {
   return s.build();
 }
 
+/**
+ * Add Parameter to tree
+ * @param node Tree root
+ * @param type Parameter types
+ * @param dest endpoint path
+ */
 function addParToTree(node: KeyVal<ParNode>, type: { type: string; req: boolean }[], dest: string, index = 0) {
   if (type.length > index) {
     const curType = (type[index].req ? "" : "?") + type[index].type;
@@ -334,14 +297,19 @@ function addParToTree(node: KeyVal<ParNode>, type: { type: string; req: boolean 
   return node;
 }
 
-function buildMultiCaller(s: StringBuilder, pars: ParNode, index = 1) {
+/**
+ * Build multi path function body
+ * @param builder String builder instance for adding the strings to
+ * @param pars Main Parameter Node
+ */
+function buildMultiCaller(builder: StringBuilder, pars: ParNode, index = 1) {
   let allKeys = Object.keys(pars.next).sort((a, b) => a.length - b.length);
   let nextKeys = allKeys.filter(a => pars.next[a].data != "");
   let hasFalse = allKeys.length != nextKeys.length;
-  let newTab = s.getNextTab();
+  let newTab = builder.getNextTab();
   if (nextKeys.length > 0) {
     if (nextKeys.length == 1 && pars.data == null && !hasFalse) {
-      buildMultiCaller(s, pars.next[nextKeys[0]], index + 1);
+      buildMultiCaller(builder, pars.next[nextKeys[0]], index + 1);
     } else {
       newTab.addLine();
       for (let i = 0; i < nextKeys.length; i++) {
@@ -375,16 +343,19 @@ function buildMultiCaller(s: StringBuilder, pars: ParNode, index = 1) {
   }
   return;
 }
+/**
+ * Replace getPromise with "function"
+ * @param val 
+ */
 function testFunc(val: string) {
   if (/getPromise/.test(val)) return "function";
   return val;
 }
-interface ParNode {
-  next: KeyVal<ParNode>;
-  data?: string;
-  key: string;
-}
 
+/**
+ * Get Name of function for a path
+ * @param key The Path being given a name
+ */
 function getEndpointName(key: string) {
   let partial = key.split("/");
   partial.shift();
@@ -397,20 +368,31 @@ function getEndpointName(key: string) {
   return s;
 }
 
-function buildFunctionCaller(s: StringBuilder, data: needPath) {
-  s.addJSDocLines(data.description, data.par.map(par => par.key + " " + par.description));
-  s
+/**
+ * Build Function caller
+ * @param builder String builder instance for adding the strings to
+ * @param data Info on the path the caller is being build for
+ */
+function buildFunctionCaller(builder: StringBuilder, data: PathInfo) {
+  builder.addJSDocLines(data.description, data.par.map(par => par.key + " " + par.description));
+  builder
     .add(data.name)
     .add("(")
     .add(data.par.map(par => `${par.key}${par.required ? "" : "?"}: ${par.type}`).join(", "))
     .add(`):Promise<${data.returnType}>`);
   return;
 }
-function buildTypeInterfaces(tabs: number, defs: KeyVal<Schema>) {
+
+/**
+ * Build All interfaces
+ * @param tabs Tab offset for the interfaces
+ * @param schemas Key-Val Object with keys being schemas and keys being their names
+ */
+function buildTypeInterfaces(tabs: number, schemas: KeyVal<Schema>) {
   let s = new StringBuilder(tabs);
-  for (const key in defs) {
+  for (const key in schemas) {
     let type = new StringBuilder(s.tabs + 1);
-    let desc = buildSchema(type, defs[key]);
+    let desc = buildSchema(type, schemas[key]);
     if (desc != undefined && desc.length > 0) {
       s.addJSDocLines(desc);
     }
@@ -422,13 +404,18 @@ function buildTypeInterfaces(tabs: number, defs: KeyVal<Schema>) {
   return s.build();
 }
 
-function buildObject(s: StringBuilder, def: SchemaObject): string | undefined {
-  let { required, properties } = def;
+/**
+ * Build Schema Object
+ * @param builder StringBuilder Instance for adding the string to
+ * @param schema Schema Object to be built
+ */
+function buildObject(builder: StringBuilder, schema: SchemaObject): string | undefined {
+  let { required, properties } = schema;
   if (properties == null) {
-    s.add("{}");
+    builder.add("{}");
     return;
   }
-  let nextTab = s.add("{").getNextTab();
+  let nextTab = builder.add("{").getNextTab();
   if (required == null) required = [];
   for (const key in properties) {
     nextTab.addLine();
@@ -439,51 +426,65 @@ function buildObject(s: StringBuilder, def: SchemaObject): string | undefined {
     }
     nextTab.add(`${key}${required.includes(key) ? "" : "?"}:`).add(prop);
   }
-  s.addLine().add("}");
-  return def.description;
+  builder.addLine().add("}");
+  return schema.description;
 }
 
+/**
+ * Build Schema
+ * @param prop 
+ * @returns Schema type
+ */
 function buildSchemaStr(prop: Schema | undefined) {
   let s = new StringBuilder();
   buildSchema(s, prop);
   return s.build();
 }
 
-function buildSchema(s: StringBuilder, prop: Schema | undefined): string | undefined {
-  if (prop == null) {
-    s.add("void");
+/** Extract key name from a Kay-Val Description */
+let KeyValTest = /key-val[\w\s`]+ with (?:the )?([\w\s]+) (?:\([\w` ]+\) )?as (?:the )?key/;
+
+/**
+ * Build Schema
+ * @param builder StringBuilder Instance for adding strings to
+ * @param schema The Schema to be built
+ * @returns The description in the schema
+ */
+function buildSchema(builder: StringBuilder, schema: Schema | undefined): string | undefined {
+  if (schema == null) {
+    builder.add("void");
     return;
   }
-  if ("properties" in prop) {
-    return buildObject(s, prop);
-  } else if ("type" in prop) {
-    if ("items" in prop) {
-      buildSchema(s, prop.items);
-      s.add("[]");
-      return prop.description;
-    } else if ("additionalProperties" in prop) {
+  if ("properties" in schema) {
+    return buildObject(builder, schema);
+  } else if ("type" in schema) {
+    if ("items" in schema) {
+      buildSchema(builder, schema.items);
+      builder.add("[]");
+      return schema.description;
+    } else if ("additionalProperties" in schema) {
       let testKeyVal: RegExpExecArray | null,
         key = "key";
-      if (prop.description != null && (testKeyVal = KeyValTest.exec(prop.description)) != null) {
+      if (schema.description != null && (testKeyVal = KeyValTest.exec(schema.description)) != null) {
         key = testKeyVal[1];
       }
-      buildSchema(s, prop.additionalProperties);
-      s.addFirst(`{[${key.replace(" ", "_")}:string]:`).add("}");
-      return prop.description;
-    } else if ("enum" in prop && prop.enum != null) {
-      s.add(prop.enum.map(a => '"' + a + '"').join(" | "));
-      return prop.description;
+      buildSchema(builder, schema.additionalProperties);
+      builder.addFirst(`{[${key.replace(" ", "_")}:string]:`).add("}");
+      return schema.description;
+    } else if ("enum" in schema && schema.enum != null) {
+      builder.add(schema.enum.map(a => '"' + a + '"').join(" | "));
+      return schema.description;
     } else {
-      s.add(fixProp(prop.type));
-      return prop.description;
+      builder.add(fixProp(schema.type));
+      return schema.description;
     }
-  } else if ("$ref" in prop) {
-    s.add(fixProp(prop.$ref.split("/").pop()));
+  } else if ("$ref" in schema) {
+    builder.add(fixProp(schema.$ref.split("/").pop()));
     return;
   }
-  s.add("void");
+  builder.add("void");
 }
-
+/** replace unsupported types */
 function fixProp(prop: string | undefined) {
   if (typeof prop == "undefined") return "void";
   if (typeof prop == "string") {
@@ -542,4 +543,75 @@ class StringBuilder {
   build(): string {
     return this.strings.map(a => (typeof a == "string" ? a : a.build())).join("");
   }
+}
+/** Promisify fs.readFile */
+function fsRead(path: string) {
+  return new Promise<string>((res, rej) => {
+    fs.readFile(path, "utf8", (err, data) => {
+      if (err) rej(err);
+      else res(data);
+    });
+  });
+}
+/** Promisified https get */
+function get<T>(urlS: string) {
+  return new Promise<T>((res, rej) => {
+    https.get(
+      Object.assign({}, url.parse(urlS), { headers: { accept: "application/json" } } as https.RequestOptions),
+      req => {
+        let obj = "";
+        req.setEncoding("utf8");
+        req.on("data", data => {
+          obj += data;
+        });
+        req.on("end", () => {
+          let data = JSON.parse(obj.replace(/,([\s\n]*})/, (_, a1) => a1));
+          if (req.statusCode == 404) {
+            rej(data);
+          } else res(data);
+        });
+        req.on("error", err => {
+          rej(err);
+        });
+      }
+    );
+  });
+}
+
+type KeyVal<T> = { [name: string]: T };
+
+interface ParNode {
+  next: KeyVal<ParNode>;
+  data?: string;
+  key: string;
+}
+
+interface need {
+  host: string;
+  basePath: string;
+  security: SecurityDefs;
+  paths: KeyVal<PathInfo>;
+  checks: KeyVal<string>;
+  types: KeyVal<Schema>;
+  note:string
+}
+
+interface PathInfo {
+  description: string;
+  name: string;
+  par: {
+    key: string;
+    type: string;
+    description: string;
+    required: boolean;
+    hasCheck: boolean;
+  }[];
+  returnType: string;
+}
+
+interface dataGroup {
+  key: string;
+  data: PathInfo;
+  parTree: KeyVal<ParNode>;
+  linked: { key: string; data: PathInfo }[];
 }
