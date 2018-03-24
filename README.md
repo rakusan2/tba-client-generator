@@ -6,7 +6,7 @@ The generated file is a Typescript file with Type Definitions for all of the typ
 
 Therefore if this is used in any Typescript enabled editor then types will be provided whether it is for type checking in TS files or just ensuring correct spelling in JS files
 
-This client supports cashing and can be used using either [Promises](#Promise) or [Callbacks](#Callback)
+This client supports cashing and can be used using either [Promises](#promise) or [Callbacks](#callback)
 
 ## Installation
 ```
@@ -15,7 +15,7 @@ npm install tba-api-client
 
 ## Usage Examples
 
-Using [Promise](#Promise)
+Using [Promise](#promise)
 ```ts
 const TBA = require("tba-api-client")
 const client = TBA.API("{TBA API KEY}")
@@ -38,7 +38,7 @@ main().catch(console.error)
 
 ```
 
-Using [Callbacks](#Callback)
+Using [Callbacks](#callback)
 ```ts
 const TBA = require("tba-api-client")
 const client = TBA.API("{TBA API KEY}")
@@ -49,7 +49,7 @@ client.Teams(2017, 0, (err, teams) => { // Gets the first page of the teams that
 })
 ```
 
-Using [Listeners](#Listener)
+Using [Listeners](#listener)
 ```ts
 const TBA = require("tba-api-client")
 const client = TBA.API("{TBA API KEY}")
@@ -60,7 +60,7 @@ client.Teams(2017, 0, (err, teams) => { // Gets the first page of the teams that
 }, true) // The last argument Sets this callback to be called every time the server responds with a 202 instead of a 303
 ```
 
-Using the [onCashExpire callbacks](#OnCashExpire)
+Using the [onCashExpire callbacks](#oncashexpire)
 ```ts
 const TBA = require("tba-api-client")
 const client = TBA.API("{TBA API KEY}")
