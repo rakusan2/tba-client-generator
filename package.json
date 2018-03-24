@@ -1,6 +1,6 @@
 {
   "name": "tba-api-client",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Promise Based TBA V3 API Client with Types",
   "main": "client/genAPI.js",
   "scripts": {
