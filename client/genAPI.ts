@@ -160,7 +160,7 @@ export class API {
   *
   * @param onCashExpire Get new promise once the cash expires
   */
-  Status(onCashExpire?: getPromise<API_Status>):getPromise<API_Status>
+  Status(onCashExpire?: getPromise<API_Status>):Promise<API_Status>
   /**
   * Returns API status, and TBA status information.
   *
@@ -178,7 +178,7 @@ export class API {
   * @param page_num Page number of results to return, zero-indexed
   * @param onCashExpire Get new promise once the cash expires
   */
-  Teams(page_num: number, onCashExpire?: getPromise<Team[]>):getPromise<Team[]>
+  Teams(page_num: number, onCashExpire?: getPromise<Team[]>):Promise<Team[]>
   /**
   * Gets a list of `Team` objects, paginated in groups of 500.
   *
@@ -194,7 +194,7 @@ export class API {
   * @param page_num Page number of results to return, zero-indexed
   * @param onCashExpire Get new promise once the cash expires
   */
-  Teams(year: number, page_num: number, onCashExpire?: getPromise<Team[]>):getPromise<Team[]>
+  Teams(year: number, page_num: number, onCashExpire?: getPromise<Team[]>):Promise<Team[]>
   /**
   * Gets a list of `Team` objects that competed in the given year, paginated in groups of 500.
   *
@@ -224,7 +224,7 @@ export class API {
   * @param page_num Page number of results to return, zero-indexed
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamsSimple(page_num: number, onCashExpire?: getPromise<Team_Simple[]>):getPromise<Team_Simple[]>
+  TeamsSimple(page_num: number, onCashExpire?: getPromise<Team_Simple[]>):Promise<Team_Simple[]>
   /**
   * Gets a list of short form `Team_Simple` objects, paginated in groups of 500.
   *
@@ -240,7 +240,7 @@ export class API {
   * @param page_num Page number of results to return, zero-indexed
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamsSimple(year: number, page_num: number, onCashExpire?: getPromise<Team_Simple[]>):getPromise<Team_Simple[]>
+  TeamsSimple(year: number, page_num: number, onCashExpire?: getPromise<Team_Simple[]>):Promise<Team_Simple[]>
   /**
   * Gets a list of short form `Team_Simple` objects that competed in the given year, paginated in groups of 500.
   *
@@ -270,7 +270,7 @@ export class API {
   * @param page_num Page number of results to return, zero-indexed
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamsKeys(page_num: number, onCashExpire?: getPromise<string[]>):getPromise<string[]>
+  TeamsKeys(page_num: number, onCashExpire?: getPromise<string[]>):Promise<string[]>
   /**
   * Gets a list of Team keys, paginated in groups of 500. (Note, each page will not have 500 teams, but will include the teams within that range of 500.)
   *
@@ -286,7 +286,7 @@ export class API {
   * @param page_num Page number of results to return, zero-indexed
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamsKeys(year: number, page_num: number, onCashExpire?: getPromise<string[]>):getPromise<string[]>
+  TeamsKeys(year: number, page_num: number, onCashExpire?: getPromise<string[]>):Promise<string[]>
   /**
   * Gets a list Team Keys that competed in the given year, paginated in groups of 500.
   *
@@ -316,7 +316,7 @@ export class API {
   * @param team_key TBA Team Key, eg `frc254`
   * @param onCashExpire Get new promise once the cash expires
   */
-  Team(team_key: string, onCashExpire?: getPromise<Team>):getPromise<Team>
+  Team(team_key: string, onCashExpire?: getPromise<Team>):Promise<Team>
   /**
   * Gets a `Team` object for the team referenced by the given key.
   *
@@ -335,7 +335,7 @@ export class API {
   * @param team_key TBA Team Key, eg `frc254`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamSimple(team_key: string, onCashExpire?: getPromise<Team_Simple>):getPromise<Team_Simple>
+  TeamSimple(team_key: string, onCashExpire?: getPromise<Team_Simple>):Promise<Team_Simple>
   /**
   * Gets a `Team_Simple` object for the team referenced by the given key.
   *
@@ -354,7 +354,7 @@ export class API {
   * @param team_key TBA Team Key, eg `frc254`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamYears_participated(team_key: string, onCashExpire?: getPromise<number[]>):getPromise<number[]>
+  TeamYears_participated(team_key: string, onCashExpire?: getPromise<number[]>):Promise<number[]>
   /**
   * Gets a list of years in which the team participated in at least one competition.
   *
@@ -373,7 +373,7 @@ export class API {
   * @param team_key TBA Team Key, eg `frc254`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamDistricts(team_key: string, onCashExpire?: getPromise<District_List[]>):getPromise<District_List[]>
+  TeamDistricts(team_key: string, onCashExpire?: getPromise<District_List[]>):Promise<District_List[]>
   /**
   * Gets an array of districts representing each year the team was in a district. Will return an empty array if the team was never in a district.
   *
@@ -392,7 +392,7 @@ export class API {
   * @param team_key TBA Team Key, eg `frc254`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamRobots(team_key: string, onCashExpire?: getPromise<{[key:string]:Team_Robot}>):getPromise<{[key:string]:Team_Robot}>
+  TeamRobots(team_key: string, onCashExpire?: getPromise<{[key:string]:Team_Robot}>):Promise<{[key:string]:Team_Robot}>
   /**
   * Gets a list of year and robot name pairs for each year that a robot name was provided. Will return an empty array if the team has never named a robot.
   *
@@ -411,7 +411,7 @@ export class API {
   * @param team_key TBA Team Key, eg `frc254`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamEvents(team_key: string, onCashExpire?: getPromise<Event[]>):getPromise<Event[]>
+  TeamEvents(team_key: string, onCashExpire?: getPromise<Event[]>):Promise<Event[]>
   /**
   * Gets a list of all events this team has competed at.
   *
@@ -427,7 +427,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamEvents(team_key: string, year: number, onCashExpire?: getPromise<Event[]>):getPromise<Event[]>
+  TeamEvents(team_key: string, year: number, onCashExpire?: getPromise<Event[]>):Promise<Event[]>
   /**
   * Gets a list of events this team has competed at in the given year.
   *
@@ -457,7 +457,7 @@ export class API {
   * @param team_key TBA Team Key, eg `frc254`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamEventsSimple(team_key: string, onCashExpire?: getPromise<Event_Simple[]>):getPromise<Event_Simple[]>
+  TeamEventsSimple(team_key: string, onCashExpire?: getPromise<Event_Simple[]>):Promise<Event_Simple[]>
   /**
   * Gets a short-form list of all events this team has competed at.
   *
@@ -473,7 +473,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamEventsSimple(team_key: string, year: number, onCashExpire?: getPromise<Event_Simple[]>):getPromise<Event_Simple[]>
+  TeamEventsSimple(team_key: string, year: number, onCashExpire?: getPromise<Event_Simple[]>):Promise<Event_Simple[]>
   /**
   * Gets a short-form list of events this team has competed at in the given year.
   *
@@ -503,7 +503,7 @@ export class API {
   * @param team_key TBA Team Key, eg `frc254`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamEventsKeys(team_key: string, onCashExpire?: getPromise<string[]>):getPromise<string[]>
+  TeamEventsKeys(team_key: string, onCashExpire?: getPromise<string[]>):Promise<string[]>
   /**
   * Gets a list of the event keys for all events this team has competed at.
   *
@@ -519,7 +519,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamEventsKeys(team_key: string, year: number, onCashExpire?: getPromise<string[]>):getPromise<string[]>
+  TeamEventsKeys(team_key: string, year: number, onCashExpire?: getPromise<string[]>):Promise<string[]>
   /**
   * Gets a list of the event keys for events this team has competed at in the given year.
   *
@@ -550,7 +550,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamEventsStatuses(team_key: string, year: number, onCashExpire?: getPromise<{[event_key:string]:Team_Event_Status}>):getPromise<{[event_key:string]:Team_Event_Status}>
+  TeamEventsStatuses(team_key: string, year: number, onCashExpire?: getPromise<{[event_key:string]:Team_Event_Status}>):Promise<{[event_key:string]:Team_Event_Status}>
   /**
   * Gets a key-value list of the event statuses for events this team has competed at in the given year.
   *
@@ -571,7 +571,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamEventMatches(team_key: string, event_key: string, onCashExpire?: getPromise<Match[]>):getPromise<Match[]>
+  TeamEventMatches(team_key: string, event_key: string, onCashExpire?: getPromise<Match[]>):Promise<Match[]>
   /**
   * Gets a list of matches for the given team and event.
   *
@@ -592,7 +592,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamEventMatchesSimple(team_key: string, event_key: string, onCashExpire?: getPromise<Match[]>):getPromise<Match[]>
+  TeamEventMatchesSimple(team_key: string, event_key: string, onCashExpire?: getPromise<Match[]>):Promise<Match[]>
   /**
   * Gets a short-form list of matches for the given team and event.
   *
@@ -613,7 +613,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamEventMatchesKeys(team_key: string, event_key: string, onCashExpire?: getPromise<string[]>):getPromise<string[]>
+  TeamEventMatchesKeys(team_key: string, event_key: string, onCashExpire?: getPromise<string[]>):Promise<string[]>
   /**
   * Gets a list of match keys for matches for the given team and event.
   *
@@ -634,7 +634,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamEventAwards(team_key: string, event_key: string, onCashExpire?: getPromise<Award[]>):getPromise<Award[]>
+  TeamEventAwards(team_key: string, event_key: string, onCashExpire?: getPromise<Award[]>):Promise<Award[]>
   /**
   * Gets a list of awards the given team won at the given event.
   *
@@ -655,7 +655,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamEventStatus(team_key: string, event_key: string, onCashExpire?: getPromise<Team_Event_Status>):getPromise<Team_Event_Status>
+  TeamEventStatus(team_key: string, event_key: string, onCashExpire?: getPromise<Team_Event_Status>):Promise<Team_Event_Status>
   /**
   * Gets the competition rank and status of the team at the given event.
   *
@@ -675,7 +675,7 @@ export class API {
   * @param team_key TBA Team Key, eg `frc254`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamAwards(team_key: string, onCashExpire?: getPromise<Award[]>):getPromise<Award[]>
+  TeamAwards(team_key: string, onCashExpire?: getPromise<Award[]>):Promise<Award[]>
   /**
   * Gets a list of awards the given team has won.
   *
@@ -691,7 +691,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamAwards(team_key: string, year: number, onCashExpire?: getPromise<Award[]>):getPromise<Award[]>
+  TeamAwards(team_key: string, year: number, onCashExpire?: getPromise<Award[]>):Promise<Award[]>
   /**
   * Gets a list of awards the given team has won in a given year.
   *
@@ -722,7 +722,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamMatches(team_key: string, year: number, onCashExpire?: getPromise<Match[]>):getPromise<Match[]>
+  TeamMatches(team_key: string, year: number, onCashExpire?: getPromise<Match[]>):Promise<Match[]>
   /**
   * Gets a list of matches for the given team and year.
   *
@@ -743,7 +743,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamMatchesSimple(team_key: string, year: number, onCashExpire?: getPromise<Match_Simple[]>):getPromise<Match_Simple[]>
+  TeamMatchesSimple(team_key: string, year: number, onCashExpire?: getPromise<Match_Simple[]>):Promise<Match_Simple[]>
   /**
   * Gets a short-form list of matches for the given team and year.
   *
@@ -764,7 +764,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamMatchesKeys(team_key: string, year: number, onCashExpire?: getPromise<string[]>):getPromise<string[]>
+  TeamMatchesKeys(team_key: string, year: number, onCashExpire?: getPromise<string[]>):Promise<string[]>
   /**
   * Gets a list of match keys for matches for the given team and year.
   *
@@ -785,7 +785,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamMedia(team_key: string, year: number, onCashExpire?: getPromise<Media[]>):getPromise<Media[]>
+  TeamMedia(team_key: string, year: number, onCashExpire?: getPromise<Media[]>):Promise<Media[]>
   /**
   * Gets a list of Media (videos / pictures) for the given team and year.
   *
@@ -802,7 +802,7 @@ export class API {
   * @param media_tag Media Tag which describes the Media.
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamMedia(team_key: string, media_tag: string, onCashExpire?: getPromise<Media[]>):getPromise<Media[]>
+  TeamMedia(team_key: string, media_tag: string, onCashExpire?: getPromise<Media[]>):Promise<Media[]>
   /**
   * Gets a list of Media (videos / pictures) for the given team and tag.
   *
@@ -820,7 +820,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamMedia(team_key: string, media_tag: string, year: number, onCashExpire?: getPromise<Media[]>):getPromise<Media[]>
+  TeamMedia(team_key: string, media_tag: string, year: number, onCashExpire?: getPromise<Media[]>):Promise<Media[]>
   /**
   * Gets a list of Media (videos / pictures) for the given team, tag and year.
   *
@@ -863,7 +863,7 @@ export class API {
   * @param team_key TBA Team Key, eg `frc254`
   * @param onCashExpire Get new promise once the cash expires
   */
-  TeamSocial_media(team_key: string, onCashExpire?: getPromise<Media[]>):getPromise<Media[]>
+  TeamSocial_media(team_key: string, onCashExpire?: getPromise<Media[]>):Promise<Media[]>
   /**
   * Gets a list of Media (social media) for the given team.
   *
@@ -882,7 +882,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  Events(year: number, onCashExpire?: getPromise<Event[]>):getPromise<Event[]>
+  Events(year: number, onCashExpire?: getPromise<Event[]>):Promise<Event[]>
   /**
   * Gets a list of events in the given year.
   *
@@ -901,7 +901,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventsSimple(year: number, onCashExpire?: getPromise<Event_Simple[]>):getPromise<Event_Simple[]>
+  EventsSimple(year: number, onCashExpire?: getPromise<Event_Simple[]>):Promise<Event_Simple[]>
   /**
   * Gets a short-form list of events in the given year.
   *
@@ -920,7 +920,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventsKeys(year: number, onCashExpire?: getPromise<string[]>):getPromise<string[]>
+  EventsKeys(year: number, onCashExpire?: getPromise<string[]>):Promise<string[]>
   /**
   * Gets a list of event keys in the given year.
   *
@@ -939,7 +939,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  Event(event_key: string, onCashExpire?: getPromise<Event>):getPromise<Event>
+  Event(event_key: string, onCashExpire?: getPromise<Event>):Promise<Event>
   /**
   * Gets an Event.
   *
@@ -958,7 +958,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventSimple(event_key: string, onCashExpire?: getPromise<Event_Simple>):getPromise<Event_Simple>
+  EventSimple(event_key: string, onCashExpire?: getPromise<Event_Simple>):Promise<Event_Simple>
   /**
   * Gets a short-form Event.
   *
@@ -977,7 +977,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventAlliances(event_key: string, onCashExpire?: getPromise<Elimination_Alliance[]>):getPromise<Elimination_Alliance[]>
+  EventAlliances(event_key: string, onCashExpire?: getPromise<Elimination_Alliance[]>):Promise<Elimination_Alliance[]>
   /**
   * Gets a list of Elimination Alliances for the given Event.
   *
@@ -996,7 +996,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventInsights(event_key: string, onCashExpire?: getPromise<{[key:string]:any}>):getPromise<{[key:string]:any}>
+  EventInsights(event_key: string, onCashExpire?: getPromise<{[key:string]:any}>):Promise<{[key:string]:any}>
   /**
   * Gets a set of Event-specific insights for the given Event.
   *
@@ -1015,7 +1015,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventOprs(event_key: string, onCashExpire?: getPromise<Event_OPRs>):getPromise<Event_OPRs>
+  EventOprs(event_key: string, onCashExpire?: getPromise<Event_OPRs>):Promise<Event_OPRs>
   /**
   * Gets a set of Event OPRs (including OPR, DPR, and CCWM) for the given Event.
   *
@@ -1034,7 +1034,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventPredictions(event_key: string, onCashExpire?: getPromise<Event_Predictions>):getPromise<Event_Predictions>
+  EventPredictions(event_key: string, onCashExpire?: getPromise<Event_Predictions>):Promise<Event_Predictions>
   /**
   * Gets information on TBA-generated predictions for the given Event. Contains year-specific information. *WARNING* This endpoint is currently under development and may change at any time.
   *
@@ -1053,7 +1053,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventRankings(event_key: string, onCashExpire?: getPromise<Event_Ranking>):getPromise<Event_Ranking>
+  EventRankings(event_key: string, onCashExpire?: getPromise<Event_Ranking>):Promise<Event_Ranking>
   /**
   * Gets a list of team rankings for the Event.
   *
@@ -1072,7 +1072,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventDistrict_points(event_key: string, onCashExpire?: getPromise<Event_District_Points>):getPromise<Event_District_Points>
+  EventDistrict_points(event_key: string, onCashExpire?: getPromise<Event_District_Points>):Promise<Event_District_Points>
   /**
   * Gets a list of team rankings for the Event.
   *
@@ -1091,7 +1091,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventTeams(event_key: string, onCashExpire?: getPromise<Team[]>):getPromise<Team[]>
+  EventTeams(event_key: string, onCashExpire?: getPromise<Team[]>):Promise<Team[]>
   /**
   * Gets a list of `Team` objects that competed in the given event.
   *
@@ -1110,7 +1110,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventTeamsSimple(event_key: string, onCashExpire?: getPromise<Team_Simple[]>):getPromise<Team_Simple[]>
+  EventTeamsSimple(event_key: string, onCashExpire?: getPromise<Team_Simple[]>):Promise<Team_Simple[]>
   /**
   * Gets a short-form list of `Team` objects that competed in the given event.
   *
@@ -1129,7 +1129,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventTeamsKeys(event_key: string, onCashExpire?: getPromise<string[]>):getPromise<string[]>
+  EventTeamsKeys(event_key: string, onCashExpire?: getPromise<string[]>):Promise<string[]>
   /**
   * Gets a list of `Team` keys that competed in the given event.
   *
@@ -1148,7 +1148,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventTeamsStatuses(event_key: string, onCashExpire?: getPromise<{[event_key:string]:Team_Event_Status}>):getPromise<{[event_key:string]:Team_Event_Status}>
+  EventTeamsStatuses(event_key: string, onCashExpire?: getPromise<{[event_key:string]:Team_Event_Status}>):Promise<{[event_key:string]:Team_Event_Status}>
   /**
   * Gets a key-value list of the event statuses for teams competing at the given event.
   *
@@ -1167,7 +1167,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventMatches(event_key: string, onCashExpire?: getPromise<Match[]>):getPromise<Match[]>
+  EventMatches(event_key: string, onCashExpire?: getPromise<Match[]>):Promise<Match[]>
   /**
   * Gets a list of matches for the given event.
   *
@@ -1186,7 +1186,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventMatchesSimple(event_key: string, onCashExpire?: getPromise<Match_Simple[]>):getPromise<Match_Simple[]>
+  EventMatchesSimple(event_key: string, onCashExpire?: getPromise<Match_Simple[]>):Promise<Match_Simple[]>
   /**
   * Gets a short-form list of matches for the given event.
   *
@@ -1205,7 +1205,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventMatchesKeys(event_key: string, onCashExpire?: getPromise<string[]>):getPromise<string[]>
+  EventMatchesKeys(event_key: string, onCashExpire?: getPromise<string[]>):Promise<string[]>
   /**
   * Gets a list of match keys for the given event.
   *
@@ -1228,7 +1228,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventMatchesTimeseries(event_key: string, onCashExpire?: getPromise<string[]>):getPromise<string[]>
+  EventMatchesTimeseries(event_key: string, onCashExpire?: getPromise<string[]>):Promise<string[]>
   /**
   * Gets an array of Match Keys for the given event key that have timeseries data. Returns an empty array if no matches have timeseries data.
   *
@@ -1251,7 +1251,7 @@ export class API {
   * @param event_key TBA Event Key, eg `2016nytr`
   * @param onCashExpire Get new promise once the cash expires
   */
-  EventAwards(event_key: string, onCashExpire?: getPromise<Award[]>):getPromise<Award[]>
+  EventAwards(event_key: string, onCashExpire?: getPromise<Award[]>):Promise<Award[]>
   /**
   * Gets a list of awards from the given event.
   *
@@ -1270,7 +1270,7 @@ export class API {
   * @param match_key TBA Match Key, eg `2016nytr_qm1`
   * @param onCashExpire Get new promise once the cash expires
   */
-  Match(match_key: string, onCashExpire?: getPromise<Match>):getPromise<Match>
+  Match(match_key: string, onCashExpire?: getPromise<Match>):Promise<Match>
   /**
   * Gets a `Match` object for the given match key.
   *
@@ -1289,7 +1289,7 @@ export class API {
   * @param match_key TBA Match Key, eg `2016nytr_qm1`
   * @param onCashExpire Get new promise once the cash expires
   */
-  MatchSimple(match_key: string, onCashExpire?: getPromise<Match_Simple>):getPromise<Match_Simple>
+  MatchSimple(match_key: string, onCashExpire?: getPromise<Match_Simple>):Promise<Match_Simple>
   /**
   * Gets a short-form `Match` object for the given match key.
   *
@@ -1312,7 +1312,7 @@ export class API {
   * @param match_key TBA Match Key, eg `2016nytr_qm1`
   * @param onCashExpire Get new promise once the cash expires
   */
-  MatchTimeseries(match_key: string, onCashExpire?: getPromise<{[key:string]:any}[]>):getPromise<{[key:string]:any}[]>
+  MatchTimeseries(match_key: string, onCashExpire?: getPromise<{[key:string]:any}[]>):Promise<{[key:string]:any}[]>
   /**
   * Gets an array of game-specific Match Timeseries objects for the given match key or an empty array if not available.
   *
@@ -1335,7 +1335,7 @@ export class API {
   * @param year Competition Year (or Season). Must be 4 digits.
   * @param onCashExpire Get new promise once the cash expires
   */
-  Districts(year: number, onCashExpire?: getPromise<District_List[]>):getPromise<District_List[]>
+  Districts(year: number, onCashExpire?: getPromise<District_List[]>):Promise<District_List[]>
   /**
   * Gets a list of districts and their corresponding district key, for the given year.
   *
@@ -1354,7 +1354,7 @@ export class API {
   * @param district_key TBA District Key, eg `2016fim`
   * @param onCashExpire Get new promise once the cash expires
   */
-  DistrictEvents(district_key: string, onCashExpire?: getPromise<Event[]>):getPromise<Event[]>
+  DistrictEvents(district_key: string, onCashExpire?: getPromise<Event[]>):Promise<Event[]>
   /**
   * Gets a list of events in the given district.
   *
@@ -1373,7 +1373,7 @@ export class API {
   * @param district_key TBA District Key, eg `2016fim`
   * @param onCashExpire Get new promise once the cash expires
   */
-  DistrictEventsSimple(district_key: string, onCashExpire?: getPromise<Event_Simple[]>):getPromise<Event_Simple[]>
+  DistrictEventsSimple(district_key: string, onCashExpire?: getPromise<Event_Simple[]>):Promise<Event_Simple[]>
   /**
   * Gets a short-form list of events in the given district.
   *
@@ -1392,7 +1392,7 @@ export class API {
   * @param district_key TBA District Key, eg `2016fim`
   * @param onCashExpire Get new promise once the cash expires
   */
-  DistrictEventsKeys(district_key: string, onCashExpire?: getPromise<string[]>):getPromise<string[]>
+  DistrictEventsKeys(district_key: string, onCashExpire?: getPromise<string[]>):Promise<string[]>
   /**
   * Gets a list of event keys for events in the given district.
   *
@@ -1411,7 +1411,7 @@ export class API {
   * @param district_key TBA District Key, eg `2016fim`
   * @param onCashExpire Get new promise once the cash expires
   */
-  DistrictTeams(district_key: string, onCashExpire?: getPromise<Team[]>):getPromise<Team[]>
+  DistrictTeams(district_key: string, onCashExpire?: getPromise<Team[]>):Promise<Team[]>
   /**
   * Gets a list of `Team` objects that competed in events in the given district.
   *
@@ -1430,7 +1430,7 @@ export class API {
   * @param district_key TBA District Key, eg `2016fim`
   * @param onCashExpire Get new promise once the cash expires
   */
-  DistrictTeamsSimple(district_key: string, onCashExpire?: getPromise<Team_Simple[]>):getPromise<Team_Simple[]>
+  DistrictTeamsSimple(district_key: string, onCashExpire?: getPromise<Team_Simple[]>):Promise<Team_Simple[]>
   /**
   * Gets a short-form list of `Team` objects that competed in events in the given district.
   *
@@ -1449,7 +1449,7 @@ export class API {
   * @param district_key TBA District Key, eg `2016fim`
   * @param onCashExpire Get new promise once the cash expires
   */
-  DistrictTeamsKeys(district_key: string, onCashExpire?: getPromise<string[]>):getPromise<string[]>
+  DistrictTeamsKeys(district_key: string, onCashExpire?: getPromise<string[]>):Promise<string[]>
   /**
   * Gets a list of `Team` objects that competed in events in the given district.
   *
@@ -1468,7 +1468,7 @@ export class API {
   * @param district_key TBA District Key, eg `2016fim`
   * @param onCashExpire Get new promise once the cash expires
   */
-  DistrictRankings(district_key: string, onCashExpire?: getPromise<District_Ranking[]>):getPromise<District_Ranking[]>
+  DistrictRankings(district_key: string, onCashExpire?: getPromise<District_Ranking[]>):Promise<District_Ranking[]>
   /**
   * Gets a list of team district rankings for the given district.
   *

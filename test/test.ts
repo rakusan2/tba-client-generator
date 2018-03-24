@@ -13,8 +13,10 @@ function fsRead(path:string){
 
 async function main(){
     let tba = new TBAClient.API(await fsRead('test/key.txt'))
-    console.log({status:await tba.Status()})
+    let status = await tba.Status()
+    console.log({status, isDown:status.is_datafeed_down})
     console.log({team:await tba.Team('frc'+3571)})
+
     let lisID = tba.TeamEvents('frc3571',2018,(err,data)=>{
         if(err) console.error(err)
         else console.log(data)

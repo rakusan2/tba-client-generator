@@ -229,7 +229,7 @@ function addEndpoint(key: string, data: PathInfo) {
     name,
     pars:getPromisePars,
     description:data.description,
-    returnType:`getPromise<${data.returnType}>`
+    returnType:`Promise<${data.returnType}>`
   }
   if (typeof endpoints[name] != "undefined") {
     endpoints[name].callerInfo.push(getPromiseCaller, getValueCaller);
