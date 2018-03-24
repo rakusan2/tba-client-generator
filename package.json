@@ -4,7 +4,7 @@
   "description": "Promise Based TBA V3 API Client with Types",
   "main": "client/genAPI.js",
   "scripts": {
-    "test": "node test/test.js",
+    "test": "tsc test/test.ts types/* node_modules/@types/node/*.d.ts --target es2017 --module commonjs --moduleResolution node && echo transpiled && node test/test.js",
     "build": "tsc && node generator/APIGenerator.js && tsc client/genAPI.ts node_modules/@types/node/*.d.ts --target es2017 --module commonjs --moduleResolution node --declaration --declarationDir types"
   },
   "repository": {

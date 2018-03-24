@@ -2,6 +2,7 @@ export declare type KeyVal<T> = {
     [key: string]: T;
 };
 export declare type getPromise<T> = (callback: () => Promise<T>) => any;
+export declare type getValue<T> = (error: any, val: T) => any;
 /**
 * The Blue Alliance V3 API
 *
@@ -10,21 +11,40 @@ export declare type getPromise<T> = (callback: () => Promise<T>) => any;
 export declare class API {
     private __key;
     private cache;
+    private __listeners;
     constructor(key: string);
-    private TBAGet<T>(path, onOutdated?);
+    private __TBAReq(path, lastModified, result, reject);
+    private __TBAGETSub<T>(path, callback, subscribe?);
+    private TBAGet<T>(path, onOutdated?, subscribe?);
+    removeListener(id: number): void;
     /**
     * Returns API status, and TBA status information.
     *
     * @param onCashExpire Get new promise once the cash expires
     */
-    Status(onCashExpire?: getPromise<API_Status>): Promise<API_Status>;
+    Status(onCashExpire?: getPromise<API_Status>): getPromise<API_Status>;
+    /**
+    * Returns API status, and TBA status information.
+    *
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    Status(callback: getValue<API_Status>, subscribe?: boolean): number;
     /**
     * Gets a list of `Team` objects, paginated in groups of 500.
     *
     * @param page_num Page number of results to return, zero-indexed
     * @param onCashExpire Get new promise once the cash expires
     */
-    Teams(page_num: number, onCashExpire?: getPromise<Team[]>): Promise<Team[]>;
+    Teams(page_num: number, onCashExpire?: getPromise<Team[]>): getPromise<Team[]>;
+    /**
+    * Gets a list of `Team` objects, paginated in groups of 500.
+    *
+    * @param page_num Page number of results to return, zero-indexed
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    Teams(page_num: number, callback: getValue<Team[]>, subscribe?: boolean): number;
     /**
     * Gets a list of `Team` objects that competed in the given year, paginated in groups of 500.
     *
@@ -32,14 +52,31 @@ export declare class API {
     * @param page_num Page number of results to return, zero-indexed
     * @param onCashExpire Get new promise once the cash expires
     */
-    Teams(year: number, page_num: number, onCashExpire?: getPromise<Team[]>): Promise<Team[]>;
+    Teams(year: number, page_num: number, onCashExpire?: getPromise<Team[]>): getPromise<Team[]>;
+    /**
+    * Gets a list of `Team` objects that competed in the given year, paginated in groups of 500.
+    *
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param page_num Page number of results to return, zero-indexed
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    Teams(year: number, page_num: number, callback: getValue<Team[]>, subscribe?: boolean): number;
     /**
     * Gets a list of short form `Team_Simple` objects, paginated in groups of 500.
     *
     * @param page_num Page number of results to return, zero-indexed
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamsSimple(page_num: number, onCashExpire?: getPromise<Team_Simple[]>): Promise<Team_Simple[]>;
+    TeamsSimple(page_num: number, onCashExpire?: getPromise<Team_Simple[]>): getPromise<Team_Simple[]>;
+    /**
+    * Gets a list of short form `Team_Simple` objects, paginated in groups of 500.
+    *
+    * @param page_num Page number of results to return, zero-indexed
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamsSimple(page_num: number, callback: getValue<Team_Simple[]>, subscribe?: boolean): number;
     /**
     * Gets a list of short form `Team_Simple` objects that competed in the given year, paginated in groups of 500.
     *
@@ -47,14 +84,31 @@ export declare class API {
     * @param page_num Page number of results to return, zero-indexed
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamsSimple(year: number, page_num: number, onCashExpire?: getPromise<Team_Simple[]>): Promise<Team_Simple[]>;
+    TeamsSimple(year: number, page_num: number, onCashExpire?: getPromise<Team_Simple[]>): getPromise<Team_Simple[]>;
+    /**
+    * Gets a list of short form `Team_Simple` objects that competed in the given year, paginated in groups of 500.
+    *
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param page_num Page number of results to return, zero-indexed
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamsSimple(year: number, page_num: number, callback: getValue<Team_Simple[]>, subscribe?: boolean): number;
     /**
     * Gets a list of Team keys, paginated in groups of 500. (Note, each page will not have 500 teams, but will include the teams within that range of 500.)
     *
     * @param page_num Page number of results to return, zero-indexed
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamsKeys(page_num: number, onCashExpire?: getPromise<string[]>): Promise<string[]>;
+    TeamsKeys(page_num: number, onCashExpire?: getPromise<string[]>): getPromise<string[]>;
+    /**
+    * Gets a list of Team keys, paginated in groups of 500. (Note, each page will not have 500 teams, but will include the teams within that range of 500.)
+    *
+    * @param page_num Page number of results to return, zero-indexed
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamsKeys(page_num: number, callback: getValue<string[]>, subscribe?: boolean): number;
     /**
     * Gets a list Team Keys that competed in the given year, paginated in groups of 500.
     *
@@ -62,35 +116,76 @@ export declare class API {
     * @param page_num Page number of results to return, zero-indexed
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamsKeys(year: number, page_num: number, onCashExpire?: getPromise<string[]>): Promise<string[]>;
+    TeamsKeys(year: number, page_num: number, onCashExpire?: getPromise<string[]>): getPromise<string[]>;
+    /**
+    * Gets a list Team Keys that competed in the given year, paginated in groups of 500.
+    *
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param page_num Page number of results to return, zero-indexed
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamsKeys(year: number, page_num: number, callback: getValue<string[]>, subscribe?: boolean): number;
     /**
     * Gets a `Team` object for the team referenced by the given key.
     *
     * @param team_key TBA Team Key, eg `frc254`
     * @param onCashExpire Get new promise once the cash expires
     */
-    Team(team_key: string, onCashExpire?: getPromise<Team>): Promise<Team>;
+    Team(team_key: string, onCashExpire?: getPromise<Team>): getPromise<Team>;
+    /**
+    * Gets a `Team` object for the team referenced by the given key.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    Team(team_key: string, callback: getValue<Team>, subscribe?: boolean): number;
     /**
     * Gets a `Team_Simple` object for the team referenced by the given key.
     *
     * @param team_key TBA Team Key, eg `frc254`
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamSimple(team_key: string, onCashExpire?: getPromise<Team_Simple>): Promise<Team_Simple>;
+    TeamSimple(team_key: string, onCashExpire?: getPromise<Team_Simple>): getPromise<Team_Simple>;
+    /**
+    * Gets a `Team_Simple` object for the team referenced by the given key.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamSimple(team_key: string, callback: getValue<Team_Simple>, subscribe?: boolean): number;
     /**
     * Gets a list of years in which the team participated in at least one competition.
     *
     * @param team_key TBA Team Key, eg `frc254`
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamYears_participated(team_key: string, onCashExpire?: getPromise<number[]>): Promise<number[]>;
+    TeamYears_participated(team_key: string, onCashExpire?: getPromise<number[]>): getPromise<number[]>;
+    /**
+    * Gets a list of years in which the team participated in at least one competition.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamYears_participated(team_key: string, callback: getValue<number[]>, subscribe?: boolean): number;
     /**
     * Gets an array of districts representing each year the team was in a district. Will return an empty array if the team was never in a district.
     *
     * @param team_key TBA Team Key, eg `frc254`
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamDistricts(team_key: string, onCashExpire?: getPromise<District_List[]>): Promise<District_List[]>;
+    TeamDistricts(team_key: string, onCashExpire?: getPromise<District_List[]>): getPromise<District_List[]>;
+    /**
+    * Gets an array of districts representing each year the team was in a district. Will return an empty array if the team was never in a district.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamDistricts(team_key: string, callback: getValue<District_List[]>, subscribe?: boolean): number;
     /**
     * Gets a list of year and robot name pairs for each year that a robot name was provided. Will return an empty array if the team has never named a robot.
     *
@@ -99,16 +194,34 @@ export declare class API {
     */
     TeamRobots(team_key: string, onCashExpire?: getPromise<{
         [key: string]: Team_Robot;
-    }>): Promise<{
+    }>): getPromise<{
         [key: string]: Team_Robot;
     }>;
+    /**
+    * Gets a list of year and robot name pairs for each year that a robot name was provided. Will return an empty array if the team has never named a robot.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamRobots(team_key: string, callback: getValue<{
+        [key: string]: Team_Robot;
+    }>, subscribe?: boolean): number;
     /**
     * Gets a list of all events this team has competed at.
     *
     * @param team_key TBA Team Key, eg `frc254`
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamEvents(team_key: string, onCashExpire?: getPromise<Event[]>): Promise<Event[]>;
+    TeamEvents(team_key: string, onCashExpire?: getPromise<Event[]>): getPromise<Event[]>;
+    /**
+    * Gets a list of all events this team has competed at.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamEvents(team_key: string, callback: getValue<Event[]>, subscribe?: boolean): number;
     /**
     * Gets a list of events this team has competed at in the given year.
     *
@@ -116,14 +229,31 @@ export declare class API {
     * @param year Competition Year (or Season). Must be 4 digits.
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamEvents(team_key: string, year: number, onCashExpire?: getPromise<Event[]>): Promise<Event[]>;
+    TeamEvents(team_key: string, year: number, onCashExpire?: getPromise<Event[]>): getPromise<Event[]>;
+    /**
+    * Gets a list of events this team has competed at in the given year.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamEvents(team_key: string, year: number, callback: getValue<Event[]>, subscribe?: boolean): number;
     /**
     * Gets a short-form list of all events this team has competed at.
     *
     * @param team_key TBA Team Key, eg `frc254`
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamEventsSimple(team_key: string, onCashExpire?: getPromise<Event_Simple[]>): Promise<Event_Simple[]>;
+    TeamEventsSimple(team_key: string, onCashExpire?: getPromise<Event_Simple[]>): getPromise<Event_Simple[]>;
+    /**
+    * Gets a short-form list of all events this team has competed at.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamEventsSimple(team_key: string, callback: getValue<Event_Simple[]>, subscribe?: boolean): number;
     /**
     * Gets a short-form list of events this team has competed at in the given year.
     *
@@ -131,14 +261,31 @@ export declare class API {
     * @param year Competition Year (or Season). Must be 4 digits.
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamEventsSimple(team_key: string, year: number, onCashExpire?: getPromise<Event_Simple[]>): Promise<Event_Simple[]>;
+    TeamEventsSimple(team_key: string, year: number, onCashExpire?: getPromise<Event_Simple[]>): getPromise<Event_Simple[]>;
+    /**
+    * Gets a short-form list of events this team has competed at in the given year.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamEventsSimple(team_key: string, year: number, callback: getValue<Event_Simple[]>, subscribe?: boolean): number;
     /**
     * Gets a list of the event keys for all events this team has competed at.
     *
     * @param team_key TBA Team Key, eg `frc254`
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamEventsKeys(team_key: string, onCashExpire?: getPromise<string[]>): Promise<string[]>;
+    TeamEventsKeys(team_key: string, onCashExpire?: getPromise<string[]>): getPromise<string[]>;
+    /**
+    * Gets a list of the event keys for all events this team has competed at.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamEventsKeys(team_key: string, callback: getValue<string[]>, subscribe?: boolean): number;
     /**
     * Gets a list of the event keys for events this team has competed at in the given year.
     *
@@ -146,7 +293,16 @@ export declare class API {
     * @param year Competition Year (or Season). Must be 4 digits.
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamEventsKeys(team_key: string, year: number, onCashExpire?: getPromise<string[]>): Promise<string[]>;
+    TeamEventsKeys(team_key: string, year: number, onCashExpire?: getPromise<string[]>): getPromise<string[]>;
+    /**
+    * Gets a list of the event keys for events this team has competed at in the given year.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamEventsKeys(team_key: string, year: number, callback: getValue<string[]>, subscribe?: boolean): number;
     /**
     * Gets a key-value list of the event statuses for events this team has competed at in the given year.
     *
@@ -156,9 +312,20 @@ export declare class API {
     */
     TeamEventsStatuses(team_key: string, year: number, onCashExpire?: getPromise<{
         [event_key: string]: Team_Event_Status;
-    }>): Promise<{
+    }>): getPromise<{
         [event_key: string]: Team_Event_Status;
     }>;
+    /**
+    * Gets a key-value list of the event statuses for events this team has competed at in the given year.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamEventsStatuses(team_key: string, year: number, callback: getValue<{
+        [event_key: string]: Team_Event_Status;
+    }>, subscribe?: boolean): number;
     /**
     * Gets a list of matches for the given team and event.
     *
@@ -166,7 +333,16 @@ export declare class API {
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamEventMatches(team_key: string, event_key: string, onCashExpire?: getPromise<Match[]>): Promise<Match[]>;
+    TeamEventMatches(team_key: string, event_key: string, onCashExpire?: getPromise<Match[]>): getPromise<Match[]>;
+    /**
+    * Gets a list of matches for the given team and event.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamEventMatches(team_key: string, event_key: string, callback: getValue<Match[]>, subscribe?: boolean): number;
     /**
     * Gets a short-form list of matches for the given team and event.
     *
@@ -174,7 +350,16 @@ export declare class API {
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamEventMatchesSimple(team_key: string, event_key: string, onCashExpire?: getPromise<Match[]>): Promise<Match[]>;
+    TeamEventMatchesSimple(team_key: string, event_key: string, onCashExpire?: getPromise<Match[]>): getPromise<Match[]>;
+    /**
+    * Gets a short-form list of matches for the given team and event.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamEventMatchesSimple(team_key: string, event_key: string, callback: getValue<Match[]>, subscribe?: boolean): number;
     /**
     * Gets a list of match keys for matches for the given team and event.
     *
@@ -182,7 +367,16 @@ export declare class API {
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamEventMatchesKeys(team_key: string, event_key: string, onCashExpire?: getPromise<string[]>): Promise<string[]>;
+    TeamEventMatchesKeys(team_key: string, event_key: string, onCashExpire?: getPromise<string[]>): getPromise<string[]>;
+    /**
+    * Gets a list of match keys for matches for the given team and event.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamEventMatchesKeys(team_key: string, event_key: string, callback: getValue<string[]>, subscribe?: boolean): number;
     /**
     * Gets a list of awards the given team won at the given event.
     *
@@ -190,7 +384,16 @@ export declare class API {
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamEventAwards(team_key: string, event_key: string, onCashExpire?: getPromise<Award[]>): Promise<Award[]>;
+    TeamEventAwards(team_key: string, event_key: string, onCashExpire?: getPromise<Award[]>): getPromise<Award[]>;
+    /**
+    * Gets a list of awards the given team won at the given event.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamEventAwards(team_key: string, event_key: string, callback: getValue<Award[]>, subscribe?: boolean): number;
     /**
     * Gets the competition rank and status of the team at the given event.
     *
@@ -198,14 +401,31 @@ export declare class API {
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamEventStatus(team_key: string, event_key: string, onCashExpire?: getPromise<Team_Event_Status>): Promise<Team_Event_Status>;
+    TeamEventStatus(team_key: string, event_key: string, onCashExpire?: getPromise<Team_Event_Status>): getPromise<Team_Event_Status>;
+    /**
+    * Gets the competition rank and status of the team at the given event.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamEventStatus(team_key: string, event_key: string, callback: getValue<Team_Event_Status>, subscribe?: boolean): number;
     /**
     * Gets a list of awards the given team has won.
     *
     * @param team_key TBA Team Key, eg `frc254`
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamAwards(team_key: string, onCashExpire?: getPromise<Award[]>): Promise<Award[]>;
+    TeamAwards(team_key: string, onCashExpire?: getPromise<Award[]>): getPromise<Award[]>;
+    /**
+    * Gets a list of awards the given team has won.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamAwards(team_key: string, callback: getValue<Award[]>, subscribe?: boolean): number;
     /**
     * Gets a list of awards the given team has won in a given year.
     *
@@ -213,7 +433,16 @@ export declare class API {
     * @param year Competition Year (or Season). Must be 4 digits.
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamAwards(team_key: string, year: number, onCashExpire?: getPromise<Award[]>): Promise<Award[]>;
+    TeamAwards(team_key: string, year: number, onCashExpire?: getPromise<Award[]>): getPromise<Award[]>;
+    /**
+    * Gets a list of awards the given team has won in a given year.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamAwards(team_key: string, year: number, callback: getValue<Award[]>, subscribe?: boolean): number;
     /**
     * Gets a list of matches for the given team and year.
     *
@@ -221,7 +450,16 @@ export declare class API {
     * @param year Competition Year (or Season). Must be 4 digits.
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamMatches(team_key: string, year: number, onCashExpire?: getPromise<Match[]>): Promise<Match[]>;
+    TeamMatches(team_key: string, year: number, onCashExpire?: getPromise<Match[]>): getPromise<Match[]>;
+    /**
+    * Gets a list of matches for the given team and year.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamMatches(team_key: string, year: number, callback: getValue<Match[]>, subscribe?: boolean): number;
     /**
     * Gets a short-form list of matches for the given team and year.
     *
@@ -229,7 +467,16 @@ export declare class API {
     * @param year Competition Year (or Season). Must be 4 digits.
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamMatchesSimple(team_key: string, year: number, onCashExpire?: getPromise<Match_Simple[]>): Promise<Match_Simple[]>;
+    TeamMatchesSimple(team_key: string, year: number, onCashExpire?: getPromise<Match_Simple[]>): getPromise<Match_Simple[]>;
+    /**
+    * Gets a short-form list of matches for the given team and year.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamMatchesSimple(team_key: string, year: number, callback: getValue<Match_Simple[]>, subscribe?: boolean): number;
     /**
     * Gets a list of match keys for matches for the given team and year.
     *
@@ -237,7 +484,16 @@ export declare class API {
     * @param year Competition Year (or Season). Must be 4 digits.
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamMatchesKeys(team_key: string, year: number, onCashExpire?: getPromise<string[]>): Promise<string[]>;
+    TeamMatchesKeys(team_key: string, year: number, onCashExpire?: getPromise<string[]>): getPromise<string[]>;
+    /**
+    * Gets a list of match keys for matches for the given team and year.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamMatchesKeys(team_key: string, year: number, callback: getValue<string[]>, subscribe?: boolean): number;
     /**
     * Gets a list of Media (videos / pictures) for the given team and year.
     *
@@ -245,7 +501,16 @@ export declare class API {
     * @param year Competition Year (or Season). Must be 4 digits.
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamMedia(team_key: string, year: number, onCashExpire?: getPromise<Media[]>): Promise<Media[]>;
+    TeamMedia(team_key: string, year: number, onCashExpire?: getPromise<Media[]>): getPromise<Media[]>;
+    /**
+    * Gets a list of Media (videos / pictures) for the given team and year.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamMedia(team_key: string, year: number, callback: getValue<Media[]>, subscribe?: boolean): number;
     /**
     * Gets a list of Media (videos / pictures) for the given team and tag.
     *
@@ -253,7 +518,16 @@ export declare class API {
     * @param media_tag Media Tag which describes the Media.
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamMedia(team_key: string, media_tag: string, onCashExpire?: getPromise<Media[]>): Promise<Media[]>;
+    TeamMedia(team_key: string, media_tag: string, onCashExpire?: getPromise<Media[]>): getPromise<Media[]>;
+    /**
+    * Gets a list of Media (videos / pictures) for the given team and tag.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param media_tag Media Tag which describes the Media.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamMedia(team_key: string, media_tag: string, callback: getValue<Media[]>, subscribe?: boolean): number;
     /**
     * Gets a list of Media (videos / pictures) for the given team, tag and year.
     *
@@ -262,56 +536,122 @@ export declare class API {
     * @param year Competition Year (or Season). Must be 4 digits.
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamMedia(team_key: string, media_tag: string, year: number, onCashExpire?: getPromise<Media[]>): Promise<Media[]>;
+    TeamMedia(team_key: string, media_tag: string, year: number, onCashExpire?: getPromise<Media[]>): getPromise<Media[]>;
+    /**
+    * Gets a list of Media (videos / pictures) for the given team, tag and year.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param media_tag Media Tag which describes the Media.
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamMedia(team_key: string, media_tag: string, year: number, callback: getValue<Media[]>, subscribe?: boolean): number;
     /**
     * Gets a list of Media (social media) for the given team.
     *
     * @param team_key TBA Team Key, eg `frc254`
     * @param onCashExpire Get new promise once the cash expires
     */
-    TeamSocial_media(team_key: string, onCashExpire?: getPromise<Media[]>): Promise<Media[]>;
+    TeamSocial_media(team_key: string, onCashExpire?: getPromise<Media[]>): getPromise<Media[]>;
+    /**
+    * Gets a list of Media (social media) for the given team.
+    *
+    * @param team_key TBA Team Key, eg `frc254`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    TeamSocial_media(team_key: string, callback: getValue<Media[]>, subscribe?: boolean): number;
     /**
     * Gets a list of events in the given year.
     *
     * @param year Competition Year (or Season). Must be 4 digits.
     * @param onCashExpire Get new promise once the cash expires
     */
-    Events(year: number, onCashExpire?: getPromise<Event[]>): Promise<Event[]>;
+    Events(year: number, onCashExpire?: getPromise<Event[]>): getPromise<Event[]>;
+    /**
+    * Gets a list of events in the given year.
+    *
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    Events(year: number, callback: getValue<Event[]>, subscribe?: boolean): number;
     /**
     * Gets a short-form list of events in the given year.
     *
     * @param year Competition Year (or Season). Must be 4 digits.
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventsSimple(year: number, onCashExpire?: getPromise<Event_Simple[]>): Promise<Event_Simple[]>;
+    EventsSimple(year: number, onCashExpire?: getPromise<Event_Simple[]>): getPromise<Event_Simple[]>;
+    /**
+    * Gets a short-form list of events in the given year.
+    *
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventsSimple(year: number, callback: getValue<Event_Simple[]>, subscribe?: boolean): number;
     /**
     * Gets a list of event keys in the given year.
     *
     * @param year Competition Year (or Season). Must be 4 digits.
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventsKeys(year: number, onCashExpire?: getPromise<string[]>): Promise<string[]>;
+    EventsKeys(year: number, onCashExpire?: getPromise<string[]>): getPromise<string[]>;
+    /**
+    * Gets a list of event keys in the given year.
+    *
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventsKeys(year: number, callback: getValue<string[]>, subscribe?: boolean): number;
     /**
     * Gets an Event.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    Event(event_key: string, onCashExpire?: getPromise<Event>): Promise<Event>;
+    Event(event_key: string, onCashExpire?: getPromise<Event>): getPromise<Event>;
+    /**
+    * Gets an Event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    Event(event_key: string, callback: getValue<Event>, subscribe?: boolean): number;
     /**
     * Gets a short-form Event.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventSimple(event_key: string, onCashExpire?: getPromise<Event_Simple>): Promise<Event_Simple>;
+    EventSimple(event_key: string, onCashExpire?: getPromise<Event_Simple>): getPromise<Event_Simple>;
+    /**
+    * Gets a short-form Event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventSimple(event_key: string, callback: getValue<Event_Simple>, subscribe?: boolean): number;
     /**
     * Gets a list of Elimination Alliances for the given Event.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventAlliances(event_key: string, onCashExpire?: getPromise<Elimination_Alliance[]>): Promise<Elimination_Alliance[]>;
+    EventAlliances(event_key: string, onCashExpire?: getPromise<Elimination_Alliance[]>): getPromise<Elimination_Alliance[]>;
+    /**
+    * Gets a list of Elimination Alliances for the given Event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventAlliances(event_key: string, callback: getValue<Elimination_Alliance[]>, subscribe?: boolean): number;
     /**
     * Gets a set of Event-specific insights for the given Event.
     *
@@ -320,58 +660,124 @@ export declare class API {
     */
     EventInsights(event_key: string, onCashExpire?: getPromise<{
         [key: string]: any;
-    }>): Promise<{
+    }>): getPromise<{
         [key: string]: any;
     }>;
+    /**
+    * Gets a set of Event-specific insights for the given Event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventInsights(event_key: string, callback: getValue<{
+        [key: string]: any;
+    }>, subscribe?: boolean): number;
     /**
     * Gets a set of Event OPRs (including OPR, DPR, and CCWM) for the given Event.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventOprs(event_key: string, onCashExpire?: getPromise<Event_OPRs>): Promise<Event_OPRs>;
+    EventOprs(event_key: string, onCashExpire?: getPromise<Event_OPRs>): getPromise<Event_OPRs>;
+    /**
+    * Gets a set of Event OPRs (including OPR, DPR, and CCWM) for the given Event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventOprs(event_key: string, callback: getValue<Event_OPRs>, subscribe?: boolean): number;
     /**
     * Gets information on TBA-generated predictions for the given Event. Contains year-specific information. *WARNING* This endpoint is currently under development and may change at any time.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventPredictions(event_key: string, onCashExpire?: getPromise<Event_Predictions>): Promise<Event_Predictions>;
+    EventPredictions(event_key: string, onCashExpire?: getPromise<Event_Predictions>): getPromise<Event_Predictions>;
+    /**
+    * Gets information on TBA-generated predictions for the given Event. Contains year-specific information. *WARNING* This endpoint is currently under development and may change at any time.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventPredictions(event_key: string, callback: getValue<Event_Predictions>, subscribe?: boolean): number;
     /**
     * Gets a list of team rankings for the Event.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventRankings(event_key: string, onCashExpire?: getPromise<Event_Ranking>): Promise<Event_Ranking>;
+    EventRankings(event_key: string, onCashExpire?: getPromise<Event_Ranking>): getPromise<Event_Ranking>;
+    /**
+    * Gets a list of team rankings for the Event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventRankings(event_key: string, callback: getValue<Event_Ranking>, subscribe?: boolean): number;
     /**
     * Gets a list of team rankings for the Event.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventDistrict_points(event_key: string, onCashExpire?: getPromise<Event_District_Points>): Promise<Event_District_Points>;
+    EventDistrict_points(event_key: string, onCashExpire?: getPromise<Event_District_Points>): getPromise<Event_District_Points>;
+    /**
+    * Gets a list of team rankings for the Event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventDistrict_points(event_key: string, callback: getValue<Event_District_Points>, subscribe?: boolean): number;
     /**
     * Gets a list of `Team` objects that competed in the given event.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventTeams(event_key: string, onCashExpire?: getPromise<Team[]>): Promise<Team[]>;
+    EventTeams(event_key: string, onCashExpire?: getPromise<Team[]>): getPromise<Team[]>;
+    /**
+    * Gets a list of `Team` objects that competed in the given event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventTeams(event_key: string, callback: getValue<Team[]>, subscribe?: boolean): number;
     /**
     * Gets a short-form list of `Team` objects that competed in the given event.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventTeamsSimple(event_key: string, onCashExpire?: getPromise<Team_Simple[]>): Promise<Team_Simple[]>;
+    EventTeamsSimple(event_key: string, onCashExpire?: getPromise<Team_Simple[]>): getPromise<Team_Simple[]>;
+    /**
+    * Gets a short-form list of `Team` objects that competed in the given event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventTeamsSimple(event_key: string, callback: getValue<Team_Simple[]>, subscribe?: boolean): number;
     /**
     * Gets a list of `Team` keys that competed in the given event.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventTeamsKeys(event_key: string, onCashExpire?: getPromise<string[]>): Promise<string[]>;
+    EventTeamsKeys(event_key: string, onCashExpire?: getPromise<string[]>): getPromise<string[]>;
+    /**
+    * Gets a list of `Team` keys that competed in the given event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventTeamsKeys(event_key: string, callback: getValue<string[]>, subscribe?: boolean): number;
     /**
     * Gets a key-value list of the event statuses for teams competing at the given event.
     *
@@ -380,30 +786,64 @@ export declare class API {
     */
     EventTeamsStatuses(event_key: string, onCashExpire?: getPromise<{
         [event_key: string]: Team_Event_Status;
-    }>): Promise<{
+    }>): getPromise<{
         [event_key: string]: Team_Event_Status;
     }>;
+    /**
+    * Gets a key-value list of the event statuses for teams competing at the given event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventTeamsStatuses(event_key: string, callback: getValue<{
+        [event_key: string]: Team_Event_Status;
+    }>, subscribe?: boolean): number;
     /**
     * Gets a list of matches for the given event.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventMatches(event_key: string, onCashExpire?: getPromise<Match[]>): Promise<Match[]>;
+    EventMatches(event_key: string, onCashExpire?: getPromise<Match[]>): getPromise<Match[]>;
+    /**
+    * Gets a list of matches for the given event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventMatches(event_key: string, callback: getValue<Match[]>, subscribe?: boolean): number;
     /**
     * Gets a short-form list of matches for the given event.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventMatchesSimple(event_key: string, onCashExpire?: getPromise<Match_Simple[]>): Promise<Match_Simple[]>;
+    EventMatchesSimple(event_key: string, onCashExpire?: getPromise<Match_Simple[]>): getPromise<Match_Simple[]>;
+    /**
+    * Gets a short-form list of matches for the given event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventMatchesSimple(event_key: string, callback: getValue<Match_Simple[]>, subscribe?: boolean): number;
     /**
     * Gets a list of match keys for the given event.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventMatchesKeys(event_key: string, onCashExpire?: getPromise<string[]>): Promise<string[]>;
+    EventMatchesKeys(event_key: string, onCashExpire?: getPromise<string[]>): getPromise<string[]>;
+    /**
+    * Gets a list of match keys for the given event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventMatchesKeys(event_key: string, callback: getValue<string[]>, subscribe?: boolean): number;
     /**
     * Gets an array of Match Keys for the given event key that have timeseries data. Returns an empty array if no matches have timeseries data.
     *
@@ -414,28 +854,64 @@ export declare class API {
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventMatchesTimeseries(event_key: string, onCashExpire?: getPromise<string[]>): Promise<string[]>;
+    EventMatchesTimeseries(event_key: string, onCashExpire?: getPromise<string[]>): getPromise<string[]>;
+    /**
+    * Gets an array of Match Keys for the given event key that have timeseries data. Returns an empty array if no matches have timeseries data.
+    *
+    * *WARNING:* This is *not* official data, and is subject to a significant possibility of error, or missing data. Do not rely on this data for any purpose. In fact, pretend we made it up.
+    *
+    * *WARNING:* This endpoint and corresponding data models are under *active development* and may change at any time, including in breaking ways.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventMatchesTimeseries(event_key: string, callback: getValue<string[]>, subscribe?: boolean): number;
     /**
     * Gets a list of awards from the given event.
     *
     * @param event_key TBA Event Key, eg `2016nytr`
     * @param onCashExpire Get new promise once the cash expires
     */
-    EventAwards(event_key: string, onCashExpire?: getPromise<Award[]>): Promise<Award[]>;
+    EventAwards(event_key: string, onCashExpire?: getPromise<Award[]>): getPromise<Award[]>;
+    /**
+    * Gets a list of awards from the given event.
+    *
+    * @param event_key TBA Event Key, eg `2016nytr`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    EventAwards(event_key: string, callback: getValue<Award[]>, subscribe?: boolean): number;
     /**
     * Gets a `Match` object for the given match key.
     *
     * @param match_key TBA Match Key, eg `2016nytr_qm1`
     * @param onCashExpire Get new promise once the cash expires
     */
-    Match(match_key: string, onCashExpire?: getPromise<Match>): Promise<Match>;
+    Match(match_key: string, onCashExpire?: getPromise<Match>): getPromise<Match>;
+    /**
+    * Gets a `Match` object for the given match key.
+    *
+    * @param match_key TBA Match Key, eg `2016nytr_qm1`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    Match(match_key: string, callback: getValue<Match>, subscribe?: boolean): number;
     /**
     * Gets a short-form `Match` object for the given match key.
     *
     * @param match_key TBA Match Key, eg `2016nytr_qm1`
     * @param onCashExpire Get new promise once the cash expires
     */
-    MatchSimple(match_key: string, onCashExpire?: getPromise<Match_Simple>): Promise<Match_Simple>;
+    MatchSimple(match_key: string, onCashExpire?: getPromise<Match_Simple>): getPromise<Match_Simple>;
+    /**
+    * Gets a short-form `Match` object for the given match key.
+    *
+    * @param match_key TBA Match Key, eg `2016nytr_qm1`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    MatchSimple(match_key: string, callback: getValue<Match_Simple>, subscribe?: boolean): number;
     /**
     * Gets an array of game-specific Match Timeseries objects for the given match key or an empty array if not available.
     *
@@ -448,65 +924,143 @@ export declare class API {
     */
     MatchTimeseries(match_key: string, onCashExpire?: getPromise<{
         [key: string]: any;
-    }[]>): Promise<{
+    }[]>): getPromise<{
         [key: string]: any;
     }[]>;
+    /**
+    * Gets an array of game-specific Match Timeseries objects for the given match key or an empty array if not available.
+    *
+    * *WARNING:* This is *not* official data, and is subject to a significant possibility of error, or missing data. Do not rely on this data for any purpose. In fact, pretend we made it up.
+    *
+    * *WARNING:* This endpoint and corresponding data models are under *active development* and may change at any time, including in breaking ways.
+    *
+    * @param match_key TBA Match Key, eg `2016nytr_qm1`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    MatchTimeseries(match_key: string, callback: getValue<{
+        [key: string]: any;
+    }[]>, subscribe?: boolean): number;
     /**
     * Gets a list of districts and their corresponding district key, for the given year.
     *
     * @param year Competition Year (or Season). Must be 4 digits.
     * @param onCashExpire Get new promise once the cash expires
     */
-    Districts(year: number, onCashExpire?: getPromise<District_List[]>): Promise<District_List[]>;
+    Districts(year: number, onCashExpire?: getPromise<District_List[]>): getPromise<District_List[]>;
+    /**
+    * Gets a list of districts and their corresponding district key, for the given year.
+    *
+    * @param year Competition Year (or Season). Must be 4 digits.
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    Districts(year: number, callback: getValue<District_List[]>, subscribe?: boolean): number;
     /**
     * Gets a list of events in the given district.
     *
     * @param district_key TBA District Key, eg `2016fim`
     * @param onCashExpire Get new promise once the cash expires
     */
-    DistrictEvents(district_key: string, onCashExpire?: getPromise<Event[]>): Promise<Event[]>;
+    DistrictEvents(district_key: string, onCashExpire?: getPromise<Event[]>): getPromise<Event[]>;
+    /**
+    * Gets a list of events in the given district.
+    *
+    * @param district_key TBA District Key, eg `2016fim`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    DistrictEvents(district_key: string, callback: getValue<Event[]>, subscribe?: boolean): number;
     /**
     * Gets a short-form list of events in the given district.
     *
     * @param district_key TBA District Key, eg `2016fim`
     * @param onCashExpire Get new promise once the cash expires
     */
-    DistrictEventsSimple(district_key: string, onCashExpire?: getPromise<Event_Simple[]>): Promise<Event_Simple[]>;
+    DistrictEventsSimple(district_key: string, onCashExpire?: getPromise<Event_Simple[]>): getPromise<Event_Simple[]>;
+    /**
+    * Gets a short-form list of events in the given district.
+    *
+    * @param district_key TBA District Key, eg `2016fim`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    DistrictEventsSimple(district_key: string, callback: getValue<Event_Simple[]>, subscribe?: boolean): number;
     /**
     * Gets a list of event keys for events in the given district.
     *
     * @param district_key TBA District Key, eg `2016fim`
     * @param onCashExpire Get new promise once the cash expires
     */
-    DistrictEventsKeys(district_key: string, onCashExpire?: getPromise<string[]>): Promise<string[]>;
+    DistrictEventsKeys(district_key: string, onCashExpire?: getPromise<string[]>): getPromise<string[]>;
+    /**
+    * Gets a list of event keys for events in the given district.
+    *
+    * @param district_key TBA District Key, eg `2016fim`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    DistrictEventsKeys(district_key: string, callback: getValue<string[]>, subscribe?: boolean): number;
     /**
     * Gets a list of `Team` objects that competed in events in the given district.
     *
     * @param district_key TBA District Key, eg `2016fim`
     * @param onCashExpire Get new promise once the cash expires
     */
-    DistrictTeams(district_key: string, onCashExpire?: getPromise<Team[]>): Promise<Team[]>;
+    DistrictTeams(district_key: string, onCashExpire?: getPromise<Team[]>): getPromise<Team[]>;
+    /**
+    * Gets a list of `Team` objects that competed in events in the given district.
+    *
+    * @param district_key TBA District Key, eg `2016fim`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    DistrictTeams(district_key: string, callback: getValue<Team[]>, subscribe?: boolean): number;
     /**
     * Gets a short-form list of `Team` objects that competed in events in the given district.
     *
     * @param district_key TBA District Key, eg `2016fim`
     * @param onCashExpire Get new promise once the cash expires
     */
-    DistrictTeamsSimple(district_key: string, onCashExpire?: getPromise<Team_Simple[]>): Promise<Team_Simple[]>;
+    DistrictTeamsSimple(district_key: string, onCashExpire?: getPromise<Team_Simple[]>): getPromise<Team_Simple[]>;
+    /**
+    * Gets a short-form list of `Team` objects that competed in events in the given district.
+    *
+    * @param district_key TBA District Key, eg `2016fim`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    DistrictTeamsSimple(district_key: string, callback: getValue<Team_Simple[]>, subscribe?: boolean): number;
     /**
     * Gets a list of `Team` objects that competed in events in the given district.
     *
     * @param district_key TBA District Key, eg `2016fim`
     * @param onCashExpire Get new promise once the cash expires
     */
-    DistrictTeamsKeys(district_key: string, onCashExpire?: getPromise<string[]>): Promise<string[]>;
+    DistrictTeamsKeys(district_key: string, onCashExpire?: getPromise<string[]>): getPromise<string[]>;
+    /**
+    * Gets a list of `Team` objects that competed in events in the given district.
+    *
+    * @param district_key TBA District Key, eg `2016fim`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    DistrictTeamsKeys(district_key: string, callback: getValue<string[]>, subscribe?: boolean): number;
     /**
     * Gets a list of team district rankings for the given district.
     *
     * @param district_key TBA District Key, eg `2016fim`
     * @param onCashExpire Get new promise once the cash expires
     */
-    DistrictRankings(district_key: string, onCashExpire?: getPromise<District_Ranking[]>): Promise<District_Ranking[]>;
+    DistrictRankings(district_key: string, onCashExpire?: getPromise<District_Ranking[]>): getPromise<District_Ranking[]>;
+    /**
+    * Gets a list of team district rankings for the given district.
+    *
+    * @param district_key TBA District Key, eg `2016fim`
+    * @param callback Request Callback
+    * @param subscribe Get New Value upon change
+    */
+    DistrictRankings(district_key: string, callback: getValue<District_Ranking[]>, subscribe?: boolean): number;
 }
 export interface API_Status {
     /** Year of the current FRC season. */

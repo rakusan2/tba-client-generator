@@ -41,16 +41,16 @@ get<SwaggerRoot>("https://www.thebluealliance.com/swagger/api_v3.json")
                     parData = par;
                   }
                   if (parData.in != "path")
-                    return { key: "", type: "", description: "", required: false, hasCheck: false };
+                    return { name: "", type: "", description: "", required: false, hasCheck: false };
                   return {
-                    key: parKey,
+                    name: parKey,
                     type: parData.type || "",
                     description: parData.description || "",
                     required: parData.required || false,
                     hasCheck: typeof checks[parKey] !== "undefined"
                   };
                 })
-                .filter(a => a.key.length > 0),
+                .filter(a => a.name.length > 0),
         description: path.description || "",
         returnType,
         name: getEndpointName(key)
@@ -173,7 +173,7 @@ function buildCheck(par: Parameter, tabs: number) {
   }
 }
 
-let endpoints: KeyVal<dataGroup> = {};
+let endpoints: KeyVal<functionNeeds> = {};
 /**
  * Sort and group Endpoints
  * @param key Endpoint Path
@@ -181,7 +181,7 @@ let endpoints: KeyVal<dataGroup> = {};
  */
 function addEndpoint(key: string, data: PathInfo) {
   let name = data.name;
-  let tags = data.par.map(a => a.key.replace("_", "/"));
+  let tags = data.par.map(par => par.name.replace("_", "/"));
   for (let i = 0; i < tags.length; i++) {
     if (key.includes(tags[i])) {
       let partialTag = tags[i].split("/");
@@ -192,34 +192,53 @@ function addEndpoint(key: string, data: PathInfo) {
       }
     }
   }
-  data.par.push({
-    key: "onCashExpire",
-    type: `getPromise<${data.returnType}>`,
-    description: "Get new promise once the cash expires",
-    required: false,
-    hasCheck: false
-  });
+  let getValuePars = Array.from(data.par)
+  let getPromisePars = Array.from(data.par)
+  let parsToTree = data.par.map(a => {
+    return { type: a.type, req: a.required };
+  })
+  parsToTree.push({type:'getValue<any> | getPromise<any>',req:true},{type:'boolean',req:true})
+  getValuePars.push({
+    name:'callback',
+    description:'Request Callback',
+    type:`getValue<${data.returnType}>`,
+    required:true,
+    hasCheck:false
+  })
+  getValuePars.push({
+    name:'subscribe',
+    description:'Get New Value upon change',
+    type:'boolean',
+    required:false,
+    hasCheck:false
+  })
+  getPromisePars.push({
+    name:'onCashExpire',
+    description:'Get new promise once the cash expires',
+    type:`getPromise<${data.returnType}>`,
+    required:false,
+    hasCheck:false
+  })
+  let getValueCaller:functionCallerInfo={
+    name,
+    pars:getValuePars,
+    description:data.description,
+    returnType:'number'
+  }
+  let getPromiseCaller:functionCallerInfo={
+    name,
+    pars:getPromisePars,
+    description:data.description,
+    returnType:`getPromise<${data.returnType}>`
+  }
   if (typeof endpoints[name] != "undefined") {
-    endpoints[name].linked.push({ key, data });
-    addParToTree(
-      endpoints[name].parTree,
-      data.par.map(a => {
-        return { type: a.type, req: a.required };
-      }),
-      key
-    );
+    endpoints[name].callerInfo.push(getPromiseCaller, getValueCaller);
+    addParToTree(endpoints[name].parBodyTree,parsToTree,key);
   } else
     endpoints[name] = {
-      key,
-      data,
-      linked: [],
-      parTree: addParToTree(
-        {},
-        data.par.map(a => {
-          return { type: a.type, req: a.required };
-        }),
-        key
-      )
+      name,
+      callerInfo:[getPromiseCaller, getValueCaller],
+      parBodyTree: addParToTree({}, parsToTree, key)
     };
 }
 
@@ -230,28 +249,29 @@ function addEndpoint(key: string, data: PathInfo) {
 function getEndpoints(tabs: number) {
   let s = new StringBuilder(tabs);
   for (const key in endpoints) {
-    let { data: endData, linked, parTree, key: endKey } = endpoints[key];
-    let typeArr = endData.par.map(par => {
-      return { types: [par.type], required: par.required };
-    });
-    buildFunctionCaller(s, endData);
-    for (let i = 0; i < linked.length; i++) {
+    let { callerInfo, parBodyTree } = endpoints[key];
+    let typeArr:{types:string[],required:boolean}[] = [];
+    let maxIndex=Math.min(...callerInfo.map(a=>a.pars.length))
+    callerInfo
+    for (let i = 0; i < callerInfo.length; i++) {
       s.addLine();
-      buildFunctionCaller(s, linked[i].data);
-      linked[i].data.par.map((par, index) => {
-        if (typeof typeArr[index] == "undefined") typeArr[index] = { types: [par.type], required: false };
+      buildFunctionCaller(s, callerInfo[i]);
+      callerInfo[i].pars.map((par, index) => {
+        if (typeof typeArr[index] == "undefined") typeArr[index] = { types: [par.type], required: maxIndex>=index && par.required };
         else {
           if (!typeArr[index].types.includes(par.type)) typeArr[index].types.push(par.type);
           typeArr[index].required = typeArr[index].required && par.required;
         }
       });
     }
-    if (linked.length > 0) {
-      console.log({ multi: endData.name });
+    if(callerInfo.length > 2){
+      console.log({ multi: key });
+    }
+    if (callerInfo.length > 0) {
       let req = true;
       s
         .addLine()
-        .add(endData.name + "(")
+        .add(key + "(")
         .add(
           typeArr
             .map(
@@ -262,15 +282,8 @@ function getEndpoints(tabs: number) {
             )
             .join(", ")
         )
-        .add("){");
-      buildMultiCaller(s, { next: parTree, key: "root" });
-      s.addLine().addLine("}");
-    } else {
-      s
-        .add("{")
-        .getNextTab()
-        .addLine()
-        .add(`return this.TBAGet(\`${endKey}\`,onCashExpire)`);
+        .add(`): any {`);
+      buildMultiCaller(s, { next: parBodyTree, key: "root" });
       s.addLine().addLine("}");
     }
   }
@@ -285,10 +298,14 @@ function getEndpoints(tabs: number) {
  */
 function addParToTree(node: KeyVal<ParNode>, type: { type: string; req: boolean }[], dest: string, index = 0) {
   if (type.length > index) {
+    if(typeof node['?'] == 'undefined'){
+      node['?']={next:{},key:''}
+    }
     const curType = (type[index].req ? "" : "?") + type[index].type;
-    if (typeof node[curType] == "undefined")
-      node[curType] = { next: addParToTree({}, type, dest, index + 1), key: type[index].type };
-    else addParToTree(node[curType].next, type, dest, index + 1);
+    if (typeof node[curType] == "undefined"){
+      let defaultNode = typeof node['?'] != 'undefined' ? Object.assign({},node['?'].next) : {}
+      node[curType] = { next: addParToTree(defaultNode, type, dest, index + 1), key: type[index].type };
+    }else addParToTree(node[curType].next, type, dest, index + 1);
     if (type.length - 1 == index && node[curType].data == null) node[curType].data = dest;
     Object.keys(node)
       .filter(a => a != curType)
@@ -303,7 +320,7 @@ function addParToTree(node: KeyVal<ParNode>, type: { type: string; req: boolean 
  * @param pars Main Parameter Node
  */
 function buildMultiCaller(builder: StringBuilder, pars: ParNode, index = 1) {
-  let allKeys = Object.keys(pars.next).sort((a, b) => a.length - b.length);
+  let allKeys = Object.keys(pars.next).filter(a=>a!='?').sort((a, b) => a.length - b.length);
   let nextKeys = allKeys.filter(a => pars.next[a].data != "");
   let hasFalse = allKeys.length != nextKeys.length;
   let newTab = builder.getNextTab();
@@ -336,7 +353,7 @@ function buildMultiCaller(builder: StringBuilder, pars: ParNode, index = 1) {
         `return this.TBAGet(\`${pars.data.replace(
           /{\w+}|{check\('(\w+)',\w+\)}/g,
           (_, a1) => `{${a1 ? `check('${a1}'` : ""}par${++count}${a1 ? ")" : ""}}`
-        )}\`, par${++count})`
+        )}\`, par${++count}, par${++count})`
       );
   } else if (nextKeys.length == 0) {
     newTab.addLine().add(`throw new Error('Parameter ${index - 1} is of a wrong type')`);
@@ -373,13 +390,13 @@ function getEndpointName(key: string) {
  * @param builder String builder instance for adding the strings to
  * @param data Info on the path the caller is being build for
  */
-function buildFunctionCaller(builder: StringBuilder, data: PathInfo) {
-  builder.addJSDocLines(data.description, data.par.map(par => par.key + " " + par.description));
+function buildFunctionCaller(builder: StringBuilder, data: functionCallerInfo) {
+  builder.addJSDocLines(data.description, data.pars.map(par => par.name + " " + par.description));
   builder
     .add(data.name)
     .add("(")
-    .add(data.par.map(par => `${par.key}${par.required ? "" : "?"}: ${par.type}`).join(", "))
-    .add(`):Promise<${data.returnType}>`);
+    .add(data.pars.map(par => `${par.name}${par.required ? "" : "?"}: ${par.type}`).join(", "))
+    .add(`):${data.returnType}`);
   return;
 }
 
@@ -391,7 +408,7 @@ function buildFunctionCaller(builder: StringBuilder, data: PathInfo) {
 function buildTypeInterfaces(tabs: number, schemas: KeyVal<Schema>) {
   let s = new StringBuilder(tabs);
   for (const key in schemas) {
-    let type = new StringBuilder(s.tabs + 1);
+    let type = new StringBuilder(tabs);
     let desc = buildSchema(type, schemas[key]);
     if (desc != undefined && desc.length > 0) {
       s.addJSDocLines(desc);
@@ -599,19 +616,27 @@ interface need {
 interface PathInfo {
   description: string;
   name: string;
-  par: {
-    key: string;
-    type: string;
-    description: string;
-    required: boolean;
-    hasCheck: boolean;
-  }[];
+  par: parameterNeed[];
   returnType: string;
 }
 
-interface dataGroup {
-  key: string;
-  data: PathInfo;
-  parTree: KeyVal<ParNode>;
-  linked: { key: string; data: PathInfo }[];
+interface functionNeeds{
+  name:string
+  parBodyTree:KeyVal<ParNode>
+  callerInfo:functionCallerInfo[]
+}
+
+interface functionCallerInfo{
+  name:string
+  pars:parameterNeed[]
+  description:string
+  returnType:string
+}
+
+interface parameterNeed{
+  name: string;
+  type: string;
+  description: string;
+  required: boolean;
+  hasCheck: boolean;
 }
